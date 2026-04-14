@@ -726,8 +726,8 @@ export const GENERATORS: Record<string, Generator> = {
     const solOp = a < 0 ? flipMap[op] : op;
     const aStr = a === 1 ? 'x' : a === -1 ? '−x' : `${a}x`;
     return {
-      display: `${aStr} ${signStr(b)} ${op} ${c}`,
-      answer: `x ${solOp} ${fracHTML(c - b, a)}`,
+      display: `${aStr} ${signStr(b)} ${op} ${c},&nbsp; x %%BLANK%%`,
+      answer: `${solOp} ${fracHTML(c - b, a)}`,
     };
   },
 
