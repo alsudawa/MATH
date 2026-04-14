@@ -20,14 +20,21 @@ function coefXStr(n: number): string {
 function signStr(n: number, withPlus = true): string {
   if (n > 0) return withPlus ? `+ ${n}` : String(n);
   if (n < 0) return `− ${Math.abs(n)}`;
-  return '+ 0';
+  return '';
 }
 
 function signXStr(n: number): string {
   if (n === 1) return '+ x';
   if (n === -1) return '− x';
   if (n > 0) return `+ ${n}x`;
-  return `− ${Math.abs(n)}x`;
+  if (n < 0) return `− ${Math.abs(n)}x`;
+  return '';
+}
+
+function nonZeroInt(rng: SeededRandom, min: number, max: number): number {
+  let v: number;
+  do { v = rng.int(min, max); } while (v === 0);
+  return v;
 }
 
 // ==================== GENERATORS ====================
@@ -303,16 +310,15 @@ export const GENERATORS: Record<string, Generator> = {
   },
 
   'M1-02': (rng) => {
-    // 정수 사칙연산 (음수 포함)
+    // 정수 사칙연산 (음수 포함) — 0 피연산자/몫 제외
     const ops = ['+', '−', '×', '÷'] as const;
     const op = ops[rng.int(0, 3)];
-    let a = rng.int(-10, 10);
-    let b = rng.int(-10, 10);
+    let a = nonZeroInt(rng, -10, 10);
+    let b = nonZeroInt(rng, -10, 10);
     let result: number;
 
     if (op === '÷') {
-      if (b === 0) b = rng.int(1, 9);
-      const q = rng.int(-10, 10);
+      const q = nonZeroInt(rng, -9, 9);
       a = b * q;
       result = q;
     } else if (op === '+') result = a + b;
@@ -351,9 +357,9 @@ export const GENERATORS: Record<string, Generator> = {
   'M1-04': (rng) => {
     // 일차식 동류항 정리: ax + b + cx + d
     const a = rng.int(-7, 7) || 2;
-    const b = rng.int(-10, 10);
+    const b = nonZeroInt(rng, -10, 10);
     const c = rng.int(-7, 7) || 1;
-    const d = rng.int(-10, 10);
+    const d = nonZeroInt(rng, -10, 10);
     const rc = a + c, rk = b + d;
 
     const display = `${coefXStr(a)} ${signStr(b)} ${signXStr(c)} ${signStr(d)} = %%BLANK%%`;
@@ -370,8 +376,8 @@ export const GENERATORS: Record<string, Generator> = {
   'M1-05': (rng) => {
     // 일차방정식: ax + b = c
     const a = rng.int(1, 8) * (rng.int(0, 1) ? 1 : -1);
-    const x = rng.int(-10, 10);
-    const b = rng.int(-10, 10);
+    const x = nonZeroInt(rng, -10, 10);
+    const b = nonZeroInt(rng, -9, 9);
     const c = a * x + b;
     const aStr = a === 1 ? 'x' : a === -1 ? '−x' : `${a}x`;
     return {
@@ -440,8 +446,8 @@ export const GENERATORS: Record<string, Generator> = {
     const ops = ['<', '>', '≤', '≥'] as const;
     const op = ops[rng.int(0, 3)];
     const a = rng.int(1, 8) * (rng.int(0, 1) ? 1 : -1);
-    const b = rng.int(-10, 10);
-    const c = rng.int(-15, 15);
+    const b = nonZeroInt(rng, -10, 10);
+    const c = nonZeroInt(rng, -15, 15);
     const flipMap: Record<string, string> = { '<': '>', '>': '<', '≤': '≥', '≥': '≤' };
     const solOp = a < 0 ? flipMap[op] : op;
     const aStr = a === 1 ? 'x' : a === -1 ? '−x' : `${a}x`;
@@ -455,7 +461,7 @@ export const GENERATORS: Record<string, Generator> = {
     // 연립방정식: 정수해 역산
     let a1: number, a2: number, b1: number, b2: number, x: number, y: number;
     do {
-      x = rng.int(-5, 5); y = rng.int(-5, 5);
+      x = nonZeroInt(rng, -5, 5); y = nonZeroInt(rng, -5, 5);
       a1 = rng.int(1, 4); b1 = rng.int(1, 4);
       a2 = rng.int(1, 4); b2 = rng.int(1, 4);
     } while (a1 * b2 - a2 * b1 === 0);
