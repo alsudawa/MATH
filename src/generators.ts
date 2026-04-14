@@ -214,8 +214,11 @@ export const GENERATORS: Record<string, Generator> = {
   // ===== E3 (초등 5~6학년) =====
 
   'E3-01': (rng) => {
-    const a = rng.int(2, 50);
-    const b = rng.int(2, 50);
+    let a: number, b: number;
+    do {
+      a = rng.int(2, 50);
+      b = rng.int(2, 50);
+    } while (a === b || gcd(a, b) === 1); // avoid trivial: identical or coprime
     return { display: `${a}와 ${b}의 최대공약수 = %%BLANK%%`, answer: String(gcd(a, b)) };
   },
 
@@ -262,9 +265,11 @@ export const GENERATORS: Record<string, Generator> = {
     const a = rng.int(11, 99) / 10;
     const b = rng.int(11, 99) / 10;
     const result = Math.round(a * b * 100) / 100;
+    // preserve trailing zero: e.g. 3.0 not 3
+    const answerStr = result % 1 === 0 ? result.toFixed(1) : String(result);
     return {
       display: `${a.toFixed(1)} × ${b.toFixed(1)} = %%BLANK%%`,
-      answer: String(result),
+      answer: answerStr,
     };
   },
 
@@ -279,13 +284,14 @@ export const GENERATORS: Record<string, Generator> = {
   },
 
   'E3-07': (rng) => {
-    // 소수 ÷ 소수, 나머지 0
+    // 소수 ÷ 소수, 나머지 0: 제수도 소수
     const b = rng.int(2, 9);
-    const q = rng.int(11, 99) / 10;
-    const a = Math.round(b * q * 10) / 10;
+    const q = rng.int(2, 9);
+    const a = Math.round(b * q * 10) / 10; // a = (b/10) * q → 소수 ÷ 소수
+    const bd = b / 10; // 한 자리 소수 제수
     return {
-      display: `${a.toFixed(1)} ÷ ${b} = %%BLANK%%`,
-      answer: q.toFixed(1),
+      display: `${a.toFixed(1)} ÷ ${bd.toFixed(1)} = %%BLANK%%`,
+      answer: String(q),
     };
   },
 
@@ -325,9 +331,10 @@ export const GENERATORS: Record<string, Generator> = {
     else if (op === '−') result = a - b;
     else result = a * b;
 
-    const da = a < 0 ? `(${a})` : String(a);
-    const db = b < 0 ? `(${b})` : String(b);
-    return { display: `${da} ${op} ${db} = %%BLANK%%`, answer: String(result) };
+    const da = a < 0 ? `(−${Math.abs(a)})` : String(a);
+    const db = b < 0 ? `(−${Math.abs(b)})` : String(b);
+    const answerStr = result < 0 ? `−${Math.abs(result)}` : String(result);
+    return { display: `${da} ${op} ${db} = %%BLANK%%`, answer: answerStr };
   },
 
   'M1-03': (rng) => {
@@ -356,9 +363,9 @@ export const GENERATORS: Record<string, Generator> = {
 
   'M1-04': (rng) => {
     // 일차식 동류항 정리: ax + b + cx + d
-    const a = rng.int(-7, 7) || 2;
+    const a = nonZeroInt(rng, -7, 7);
     const b = nonZeroInt(rng, -10, 10);
-    const c = rng.int(-7, 7) || 1;
+    const c = nonZeroInt(rng, -7, 7);
     const d = nonZeroInt(rng, -10, 10);
     const rc = a + c, rk = b + d;
 
@@ -400,7 +407,16 @@ export const GENERATORS: Record<string, Generator> = {
     while (tmp % 2 === 0) tmp /= 2;
     while (tmp % 5 === 0) tmp /= 5;
     const terminating = tmp === 1;
-    const answer = terminating ? String(val) : val.toFixed(5) + '...';
+    let answer: string;
+    if (terminating) {
+      // 유한소수: 정확한 값 표시 (trailing zero 포함)
+      const decimals = String(val).split('.')[1]?.length ?? 0;
+      answer = val.toFixed(Math.max(decimals, 1));
+    } else {
+      // 무한소수: 4자리까지 보여주고 ...
+      const digits = (sn / sd).toFixed(6).replace(/^.*\./, '');
+      answer = '0.' + digits.slice(0, 4) + '...';
+    }
     return {
       display: `${fracHTMLRaw(sn, sd)} 를 소수로 나타내면 %%BLANK%%`,
       answer,
@@ -458,20 +474,33 @@ export const GENERATORS: Record<string, Generator> = {
   },
 
   'M2-05': (rng) => {
-    // 연립방정식: 정수해 역산
+    // 연립방정식: 정수해 역산 (음의 계수 포함)
     let a1: number, a2: number, b1: number, b2: number, x: number, y: number;
     do {
       x = nonZeroInt(rng, -5, 5); y = nonZeroInt(rng, -5, 5);
-      a1 = rng.int(1, 4); b1 = rng.int(1, 4);
-      a2 = rng.int(1, 4); b2 = rng.int(1, 4);
+      a1 = nonZeroInt(rng, -4, 4); b1 = nonZeroInt(rng, -4, 4);
+      a2 = nonZeroInt(rng, -4, 4); b2 = nonZeroInt(rng, -4, 4);
     } while (a1 * b2 - a2 * b1 === 0);
     const c1 = a1 * x + b1 * y;
     const c2 = a2 * x + b2 * y;
-    const r1 = `${a1 === 1 ? '' : a1}x + ${b1 === 1 ? '' : b1}y = ${c1}`;
-    const r2 = `${a2 === 1 ? '' : a2}x + ${b2 === 1 ? '' : b2}y = ${c2}`;
+
+    const termStr = (coef: number, varName: string) => {
+      if (coef === 1) return varName;
+      if (coef === -1) return `−${varName}`;
+      if (coef < 0) return `−${Math.abs(coef)}${varName}`;
+      return `${coef}${varName}`;
+    };
+
+    const xTerm1 = termStr(a1, 'x'), yTerm1 = termStr(Math.abs(b1), 'y');
+    const xTerm2 = termStr(a2, 'x'), yTerm2 = termStr(Math.abs(b2), 'y');
+    const r1 = `${xTerm1}${b1 >= 0 ? ' + ' : ' − '}${yTerm1} = ${c1}`;
+    const r2 = `${xTerm2}${b2 >= 0 ? ' + ' : ' − '}${yTerm2} = ${c2}`;
+
+    const ansX = x < 0 ? `−${Math.abs(x)}` : String(x);
+    const ansY = y < 0 ? `−${Math.abs(y)}` : String(y);
     return {
       display: `${r1}<br>${r2}<br>x = %%BLANK%%, &nbsp;y = %%BLANK%%`,
-      answer: `x = ${x}, y = ${y}`,
+      answer: `x = ${ansX}, y = ${ansY}`,
     };
   },
 
@@ -484,7 +513,13 @@ export const GENERATORS: Record<string, Generator> = {
       return { display: `√${n * n} = %%BLANK%%`, answer: String(n) };
     } else if (type === 1) {
       const a = rng.int(2, 7), b = rng.int(2, 7);
-      return { display: `√${a} × √${b} = %%BLANK%%`, answer: `√${a * b}` };
+      const prod = a * b;
+      const sqrtProd = Math.round(Math.sqrt(prod));
+      const isPerfectSq = sqrtProd * sqrtProd === prod;
+      return {
+        display: `√${a} × √${b} = %%BLANK%%`,
+        answer: isPerfectSq ? String(sqrtProd) : `√${prod}`,
+      };
     } else {
       const a = rng.int(2, 15);
       return { display: `(√${a})² = %%BLANK%%`, answer: String(a) };
@@ -492,7 +527,7 @@ export const GENERATORS: Record<string, Generator> = {
   },
 
   'M3-02': (rng) => {
-    const type = rng.int(0, 2);
+    const type = rng.int(0, 3);
     const a = rng.int(1, 8);
     if (type === 0) {
       return {
@@ -504,16 +539,27 @@ export const GENERATORS: Record<string, Generator> = {
         display: `(x − ${a})² = %%BLANK%%`,
         answer: `x² − ${2 * a}x + ${a * a}`,
       };
-    } else {
+    } else if (type === 2) {
       return {
         display: `(x + ${a})(x − ${a}) = %%BLANK%%`,
         answer: `x² − ${a * a}`,
+      };
+    } else {
+      // (ax+b)(cx+d), leading coefficient ≠ 1
+      const p = rng.int(2, 4), q = rng.int(1, 5);
+      const r = rng.int(2, 4), s = rng.int(1, 5);
+      const A = p * r, B = p * s + q * r, C = q * s;
+      const bStr = B > 0 ? ` + ${B}x` : ` − ${Math.abs(B)}x`;
+      const cStr = C > 0 ? ` + ${C}` : ` − ${Math.abs(C)}`;
+      return {
+        display: `(${p}x + ${q})(${r}x + ${s}) = %%BLANK%%`,
+        answer: `${A}x²${bStr}${cStr}`,
       };
     }
   },
 
   'M3-03': (rng) => {
-    const type = rng.int(0, 2);
+    const type = rng.int(0, 3);
     const a = rng.int(1, 8);
     if (type === 0) {
       return {
@@ -525,10 +571,19 @@ export const GENERATORS: Record<string, Generator> = {
         display: `x² − ${2 * a}x + ${a * a} = %%BLANK%%`,
         answer: `(x − ${a})²`,
       };
-    } else {
+    } else if (type === 2) {
       return {
         display: `x² − ${a * a} = %%BLANK%%`,
         answer: `(x + ${a})(x − ${a})`,
+      };
+    } else {
+      // x² + (a+b)x + ab = (x+a)(x+b), a ≠ b
+      const b = rng.int(1, 8);
+      const sumAB = a + b;
+      const prodAB = a * b;
+      return {
+        display: `x² + ${sumAB}x + ${prodAB} = %%BLANK%%`,
+        answer: `(x + ${a})(x + ${b})`,
       };
     }
   },
