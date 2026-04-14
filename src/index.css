@@ -41,9 +41,10 @@
 
 /* ===== 인쇄 ===== */
 @media print {
-  /* body > #root > div (App wrapper) 의 자식 중 print-root 외 숨김 */
   header, main { display: none !important; }
   #print-root { display: block !important; }
+  /* min-h-screen 래퍼가 빈 페이지를 만들지 않도록 */
+  .min-h-screen { min-height: 0 !important; }
 
   @page { size: A4 portrait; margin: 15mm 15mm 12mm 15mm; }
 
