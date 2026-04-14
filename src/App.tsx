@@ -81,12 +81,12 @@ export default function App() {
   const handleSelectGrade = useCallback((code: string) => {
     setGradeCode(code);
     setChapIdx(0);
-    generate(code, 0, sheetCount, true);
+    generate(code, 0, sheetCount);
   }, [sheetCount, generate]);
 
   const handleSelectChapter = useCallback((idx: number) => {
     setChapIdx(idx);
-    generate(gradeCode, idx, sheetCount, true);
+    generate(gradeCode, idx, sheetCount);
   }, [gradeCode, sheetCount, generate]);
 
   const handleChangeCount = useCallback((n: number) => {
