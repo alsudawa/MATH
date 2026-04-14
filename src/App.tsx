@@ -26,7 +26,7 @@ export default function App() {
   const grade = GRADE_DATA.find(g => g.code === gradeCode) ?? GRADE_DATA[0];
   const chapter = grade.chapters[chapIdx] ?? grade.chapters[0];
 
-  // URL에서 WID 복원 (최초 1회)
+  // URL에서 WID 복원
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const wid = params.get('wid');
@@ -102,16 +102,16 @@ export default function App() {
     <div className="min-h-screen bg-slate-50">
       <Header gradeColor={grade.color} onWidNavigate={handleWidNavigate} />
 
-      <main className="max-w-5xl mx-auto px-4 py-10 flex flex-col gap-10">
+      <main className="max-w-5xl mx-auto px-4 py-10 flex flex-col gap-12">
 
-        {/* Step 1 */}
-        <section className="flex flex-col gap-4">
+        {/* Step 1: 학년 */}
+        <section className="flex flex-col gap-5">
           <StepLabel num={1} text="학년을 선택하세요" color={grade.color} />
           <GradeSelector selected={gradeCode} onSelect={handleSelectGrade} />
         </section>
 
-        {/* Step 2 */}
-        <section className="flex flex-col gap-4">
+        {/* Step 2: 챕터 */}
+        <section className="flex flex-col gap-5">
           <StepLabel num={2} text="챕터를 선택하세요" color={grade.color} />
           <ChapterSelector
             chapters={grade.chapters}
@@ -121,8 +121,8 @@ export default function App() {
           />
         </section>
 
-        {/* Step 3 */}
-        <section className="flex flex-col gap-4">
+        {/* Step 3: 생성 */}
+        <section className="flex flex-col gap-5">
           <StepLabel num={3} text="몇 장 출력할까요?" color={grade.color} />
           <GenerateControls
             sheetCount={sheetCount}
@@ -148,7 +148,6 @@ export default function App() {
         )}
       </main>
 
-      {/* 인쇄 영역 */}
       {sheets.length > 0 && (
         <PrintArea sheets={sheets} grade={grade} chapter={chapter} cols={cols} />
       )}
@@ -160,12 +159,13 @@ function StepLabel({ num, text, color }: { num: number; text: string; color: str
   return (
     <div className="flex items-center gap-3">
       <span
-        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-black flex-shrink-0"
+        className="w-9 h-9 rounded-full flex items-center justify-center text-white text-base font-black flex-shrink-0 shadow-md"
         style={{ background: color }}
       >
         {num}
       </span>
-      <span className="text-lg font-bold text-slate-700">{text}</span>
+      <span className="text-xl font-black text-slate-700">{text}</span>
+      <span className="flex-1 h-px bg-slate-200" />
     </div>
   );
 }

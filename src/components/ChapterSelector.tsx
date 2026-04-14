@@ -9,7 +9,7 @@ interface Props {
 
 export default function ChapterSelector({ chapters, selected, onSelect, color }: Props) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
       {chapters.map((ch, i) => {
         const active = i === selected;
         return (
@@ -17,36 +17,35 @@ export default function ChapterSelector({ chapters, selected, onSelect, color }:
             key={ch.id}
             onClick={() => onSelect(i)}
             className={`
-              flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 text-left
-              transition-all duration-150 cursor-pointer w-full
+              flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left
+              transition-all duration-150 cursor-pointer w-full font-sans
               ${active
-                ? 'shadow-md'
-                : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+                ? 'text-white shadow-md border-transparent'
+                : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm text-slate-700'
               }
             `}
-            style={active ? {
-              borderColor: color,
-              background: `color-mix(in srgb, ${color} 7%, white)`,
-            } : {}}
+            style={active ? { background: color, borderColor: color } : {}}
           >
+            {/* 번호 뱃지 */}
             <span
               className={`
-                min-w-[32px] h-8 rounded-lg flex items-center justify-center
-                text-xs font-black flex-shrink-0 transition-colors
+                w-8 h-8 rounded-lg flex items-center justify-center
+                text-xs font-black flex-shrink-0
+                ${active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}
               `}
-              style={active
-                ? { background: color, color: 'white' }
-                : { background: '#f1f5f9', color: '#64748b' }
-              }
             >
               {ch.id}
             </span>
-            <span
-              className={`text-sm leading-snug transition-colors ${active ? 'font-bold' : 'font-medium text-slate-600'}`}
-              style={active ? { color: '#1e293b' } : {}}
-            >
+
+            {/* 챕터명 */}
+            <span className={`text-sm font-semibold leading-snug ${active ? 'text-white' : ''}`}>
               {ch.name}
             </span>
+
+            {/* 선택 체크 */}
+            {active && (
+              <span className="ml-auto text-white/80 text-lg flex-shrink-0">✓</span>
+            )}
           </button>
         );
       })}
