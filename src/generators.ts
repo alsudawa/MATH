@@ -1,4 +1,4 @@
-import { SeededRandom, gcd, lcm, fracHTML, fracHTMLRaw } from './utils';
+import { SeededRandom, gcd, lcm, fracHTML, fracHTMLRaw, fracHTMLParenRaw } from './utils';
 
 // ==================== TYPES ====================
 
@@ -542,8 +542,8 @@ export const GENERATORS: Record<string, Generator> = {
     else if (op === '×') { rn = an * bn; rd = ad * bd; }
     else { rn = an * bd; rd = ad * bn; }
 
-    const dA = an < 0 ? `(${fracHTMLRaw(an, ad)})` : fracHTMLRaw(an, ad);
-    const dB = bn < 0 ? `(${fracHTMLRaw(bn, bd)})` : fracHTMLRaw(bn, bd);
+    const dA = fracHTMLParenRaw(an, ad);
+    const dB = fracHTMLParenRaw(bn, bd);
     return {
       display: `${dA} ${op} ${dB} = %%BLANK%%`,
       answer: fracHTML(rn, rd),

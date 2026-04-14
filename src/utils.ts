@@ -53,6 +53,10 @@ export function lcm(a: number, b: number): number {
 
 // ==================== FRACTION HTML ====================
 
+function makeFrac(absN: number, d: number): string {
+  return `<span class="frac"><span class="frac-num">${absN}</span><span class="frac-den">${d}</span></span>`;
+}
+
 /** 분수 HTML (GCD 약분 적용, answer용) */
 export function fracHTML(n: number, d: number): string {
   const g = gcd(Math.abs(n), Math.abs(d));
@@ -60,17 +64,29 @@ export function fracHTML(n: number, d: number): string {
   d = d / g;
   if (d < 0) { n = -n; d = -d; }
   if (d === 1) return n < 0 ? `−${Math.abs(n)}` : String(n);
-  const sign = n < 0 ? '−' : '';
-  const absN = Math.abs(n);
-  return `${sign}<span class="frac"><span class="frac-num">${absN}</span><span class="frac-den">${d}</span></span>`;
+  const frac = makeFrac(Math.abs(n), d);
+  return n < 0
+    ? `<span class="neg-frac">−${frac}</span>`
+    : frac;
 }
 
 /** 분수 HTML (약분 없음, display용) */
 export function fracHTMLRaw(n: number, d: number): string {
   if (d === 1) return n < 0 ? `−${Math.abs(n)}` : String(n);
-  const sign = n < 0 ? '−' : '';
-  const absN = Math.abs(n);
-  return `${sign}<span class="frac"><span class="frac-num">${absN}</span><span class="frac-den">${d}</span></span>`;
+  const frac = makeFrac(Math.abs(n), d);
+  return n < 0
+    ? `<span class="neg-frac">−${frac}</span>`
+    : frac;
+}
+
+/** 음수 분수에 괄호를 붙일 때 수직 정렬 포함: (−n/d)
+ *  예) M1-03에서 (−3/5) 표기가 필요한 경우 */
+export function fracHTMLParenRaw(n: number, d: number): string {
+  if (d === 1) return n < 0 ? `(−${Math.abs(n)})` : String(n);
+  const frac = makeFrac(Math.abs(n), d);
+  return n < 0
+    ? `<span class="neg-frac">(−${frac})</span>`
+    : frac;
 }
 
 // ==================== BLANK RENDER ====================

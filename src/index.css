@@ -23,6 +23,14 @@
 }
 .frac-den { padding: 0 3px; line-height: 1.5; }
 
+/* 음수 분수: − 기호와 분수를 수직 정렬 */
+.neg-frac {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  gap: 1px;
+}
+
 /* 정답 빈칸 */
 .answer-blank {
   display: inline-block;
