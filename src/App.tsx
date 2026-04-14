@@ -124,10 +124,10 @@ export default function App() {
 
   if (answersMode && sheets.length > 0) {
     return (
-      <>
+      <div className="min-h-screen bg-slate-50">
         <AnswersPage sheets={sheets} grade={grade} chapter={chapter} />
         <PrintArea sheets={sheets} grade={grade} chapter={chapter} cols={cols} />
-      </>
+      </div>
     );
   }
 
