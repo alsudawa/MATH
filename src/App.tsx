@@ -152,6 +152,11 @@ export default function App() {
           />
         </section>
 
+        <section className="flex flex-col gap-5">
+          <StepLabel num={3} text="몇 장 출력할까요?" color={grade.color} />
+          <SheetCountControl count={sheetCount} onChange={handleChangeCount} color={grade.color} />
+        </section>
+
         {sheets.length > 0 && (
           <PreviewSection
             sheets={sheets}
@@ -163,13 +168,40 @@ export default function App() {
             chapter={chapter}
             cols={cols}
             sheetCount={sheetCount}
-            onChangeCount={handleChangeCount}
           />
         )}
       </main>
 
       {sheets.length > 0 && (
         <PrintArea sheets={sheets} grade={grade} chapter={chapter} cols={cols} />
+      )}
+    </div>
+  );
+}
+
+function SheetCountControl({ count, onChange }: { count: number; onChange: (n: number) => void; color: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 bg-white border-2 border-slate-200 rounded-xl px-3 py-2 shadow-sm">
+        <button
+          onClick={() => onChange(count - 1)}
+          disabled={count <= 1}
+          className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center font-bold text-slate-600 transition-colors text-lg disabled:opacity-30"
+        >
+          −
+        </button>
+        <span className="w-10 text-center text-lg font-bold text-slate-800 tabular-nums">{count}</span>
+        <button
+          onClick={() => onChange(count + 1)}
+          disabled={count >= 20}
+          className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center font-bold text-slate-600 transition-colors text-lg disabled:opacity-30"
+        >
+          +
+        </button>
+        <span className="text-sm text-slate-400 ml-1">장</span>
+      </div>
+      {count > 1 && (
+        <span className="text-sm text-slate-400">{count}장이 한 세트로 생성됩니다</span>
       )}
     </div>
   );

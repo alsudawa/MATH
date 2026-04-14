@@ -15,13 +15,12 @@ interface Props {
   chapter: Chapter;
   cols: number;
   sheetCount: number;
-  onChangeCount: (n: number) => void;
 }
 
 export default function PreviewSection({
   sheets, currentSheet, onNavigate,
   showAnswers, onToggleAnswers,
-  grade, chapter, cols, sheetCount, onChangeCount,
+  grade, chapter, cols, sheetCount,
 }: Props) {
   const qrRef = useRef<HTMLDivElement>(null);
   const sheet = sheets[currentSheet];
@@ -63,28 +62,6 @@ export default function PreviewSection({
           >
             ▶
           </button>
-        </div>
-
-        {/* 장 수 */}
-        <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 flex-shrink-0">
-          <button
-            onClick={() => onChangeCount(sheetCount - 1)}
-            disabled={sheetCount <= 1}
-            className="w-6 h-6 rounded flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors disabled:opacity-30 font-bold"
-          >
-            −
-          </button>
-          <span className="text-sm font-bold text-slate-700 tabular-nums min-w-[1.25rem] text-center">
-            {sheetCount}
-          </span>
-          <button
-            onClick={() => onChangeCount(sheetCount + 1)}
-            disabled={sheetCount >= 20}
-            className="w-6 h-6 rounded flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors disabled:opacity-30 font-bold"
-          >
-            +
-          </button>
-          <span className="text-xs text-slate-400 ml-0.5">장</span>
         </div>
 
         <div className="flex-1" />
