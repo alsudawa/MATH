@@ -87,15 +87,7 @@ export default function PreviewSection({
           <span className="text-xs text-slate-400 ml-0.5">장</span>
         </div>
 
-        {/* WID */}
-        <div className="flex-1 min-w-0">
-          <div className="font-mono font-bold tracking-widest text-sm" style={{ color: grade.color }}>
-            {sheet.wid}
-          </div>
-          <div className="text-xs text-slate-400 mt-0.5 hidden sm:block">
-            번호를 공유하면 같은 문제를 다시 볼 수 있어요
-          </div>
-        </div>
+        <div className="flex-1" />
 
         {/* 액션 */}
         <div className="flex gap-2 flex-shrink-0">
@@ -126,16 +118,21 @@ export default function PreviewSection({
             <div className="font-bold text-slate-700">{grade.fullLabel}</div>
             <div className="text-sm text-slate-500 mt-0.5">{chapter.name}</div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="text-right text-xs text-slate-400">
+          <div className="flex items-start gap-3">
+            <div className="text-right text-xs text-slate-400 mt-1">
               <div>총 {sheet.problems.length}문제</div>
               <div>{sheetCount}장 세트</div>
             </div>
-            <div
-              ref={qrRef}
-              className="rounded-lg overflow-hidden"
-              style={{ width: 72, height: 72 }}
-            />
+            <div className="flex flex-col items-center gap-1">
+              <div
+                ref={qrRef}
+                className="rounded-lg overflow-hidden"
+                style={{ width: 72, height: 72 }}
+              />
+              <div className="font-mono font-bold tracking-widest text-[10px]" style={{ color: grade.color }}>
+                {sheet.wid}
+              </div>
+            </div>
           </div>
         </div>
 
