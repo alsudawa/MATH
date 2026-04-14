@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { GRADE_DATA, parseWid, buildWid, buildURL, colsForPerPage } from './data';
 import { newSeed, deriveSeeds } from './utils';
 import { generateProblems, Problem } from './generators';
@@ -23,11 +23,11 @@ export default function App() {
   const [currentSheet, setCurrentSheet] = useState(0);
   const [showAnswers, setShowAnswers] = useState(false);
 
-  const grade = GRADE_DATA.find(g => g.code === gradeCode)!;
-  const chapter = grade.chapters[chapIdx];
+  const grade = GRADE_DATA.find(g => g.code === gradeCode) ?? GRADE_DATA[0];
+  const chapter = grade.chapters[chapIdx] ?? grade.chapters[0];
 
   // URL에서 WID 복원 (최초 1회)
-  useState(() => {
+  useEffect(() => {
     const params = new URLSearchParams(location.search);
     const wid = params.get('wid');
     const n = Math.max(1, Math.min(20, parseInt(params.get('n') ?? '1') || 1));
@@ -47,7 +47,8 @@ export default function App() {
     setChapIdx(parsed.chapIdx);
     setSheetCount(n);
     setSheets(newSheets);
-  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSelectGrade = useCallback((code: string) => {
     setGradeCode(code);
@@ -74,10 +75,11 @@ export default function App() {
   const handleWidNavigate = useCallback((wid: string): boolean => {
     const parsed = parseWid(wid);
     if (!parsed) return false;
-    const g = GRADE_DATA.find(x => x.code === parsed.gradeCode)!;
+    const g = GRADE_DATA.find(x => x.code === parsed.gradeCode);
+    if (!g) return false;
     const ch = g.chapters[parsed.chapIdx];
     const newSheet: Sheet = {
-      wid: buildWid(parsed.gradeCode, parsed.chapId, parsed.seed),
+      wid: buildWid(parsed.gradeCode, ch.id, parsed.seed),
       seed: parsed.seed,
       problems: generateProblems(parsed.gradeCode, ch.id, parsed.seed, ch.perPage),
     };

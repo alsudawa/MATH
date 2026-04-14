@@ -38,7 +38,7 @@ export default function GenerateControls({ sheetCount, onChangeCount, onGenerate
       {/* 생성 버튼 */}
       <button
         onClick={onGenerate}
-        className="flex items-center gap-2.5 px-6 py-3.5 rounded-xl text-white font-bold text-base
+        className="group flex items-center gap-2.5 px-6 py-3.5 rounded-xl text-white font-bold text-base
           transition-all duration-200 hover:-translate-y-1 hover:shadow-xl active:translate-y-0"
         style={{
           background: color,
