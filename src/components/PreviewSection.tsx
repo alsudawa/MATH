@@ -15,12 +15,13 @@ interface Props {
   chapter: Chapter;
   cols: number;
   sheetCount: number;
+  onChangeCount: (n: number) => void;
 }
 
 export default function PreviewSection({
   sheets, currentSheet, onNavigate,
   showAnswers, onToggleAnswers,
-  grade, chapter, cols, sheetCount,
+  grade, chapter, cols, sheetCount, onChangeCount,
 }: Props) {
   const qrRef = useRef<HTMLDivElement>(null);
   const sheet = sheets[currentSheet];
@@ -40,36 +41,58 @@ export default function PreviewSection({
   return (
     <section id="preview-section" className="flex flex-col gap-4">
       {/* 툴바 */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 px-5 py-4 flex items-center gap-4 flex-wrap">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 px-5 py-3 flex items-center gap-3 flex-wrap">
         {/* 페이지 내비 */}
-        <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => onNavigate(Math.max(0, currentSheet - 1))}
             disabled={currentSheet === 0}
-            className="w-9 h-9 rounded-full border-2 border-slate-200 bg-white flex items-center justify-center font-bold text-slate-500
-              hover:border-slate-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-8 h-8 rounded-full border-2 border-slate-200 bg-white flex items-center justify-center font-bold text-slate-500
+              hover:border-slate-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-sm"
           >
             ◀
           </button>
-          <span className="font-bold text-slate-700 min-w-[52px] text-center tabular-nums">
+          <span className="font-bold text-slate-700 min-w-[44px] text-center tabular-nums text-sm">
             {currentSheet + 1} / {sheets.length}
           </span>
           <button
             onClick={() => onNavigate(Math.min(sheets.length - 1, currentSheet + 1))}
             disabled={currentSheet === sheets.length - 1}
-            className="w-9 h-9 rounded-full border-2 border-slate-200 bg-white flex items-center justify-center font-bold text-slate-500
-              hover:border-slate-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-8 h-8 rounded-full border-2 border-slate-200 bg-white flex items-center justify-center font-bold text-slate-500
+              hover:border-slate-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-sm"
           >
             ▶
           </button>
         </div>
 
+        {/* 장 수 */}
+        <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 flex-shrink-0">
+          <button
+            onClick={() => onChangeCount(sheetCount - 1)}
+            disabled={sheetCount <= 1}
+            className="w-6 h-6 rounded flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors disabled:opacity-30 font-bold"
+          >
+            −
+          </button>
+          <span className="text-sm font-bold text-slate-700 tabular-nums min-w-[1.25rem] text-center">
+            {sheetCount}
+          </span>
+          <button
+            onClick={() => onChangeCount(sheetCount + 1)}
+            disabled={sheetCount >= 20}
+            className="w-6 h-6 rounded flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors disabled:opacity-30 font-bold"
+          >
+            +
+          </button>
+          <span className="text-xs text-slate-400 ml-0.5">장</span>
+        </div>
+
         {/* WID */}
         <div className="flex-1 min-w-0">
-          <div className="font-mono font-bold tracking-widest text-base" style={{ color: grade.color }}>
+          <div className="font-mono font-bold tracking-widest text-sm" style={{ color: grade.color }}>
             {sheet.wid}
           </div>
-          <div className="text-xs text-slate-400 mt-0.5">
+          <div className="text-xs text-slate-400 mt-0.5 hidden sm:block">
             번호를 공유하면 같은 문제를 다시 볼 수 있어요
           </div>
         </div>
@@ -78,13 +101,13 @@ export default function PreviewSection({
         <div className="flex gap-2 flex-shrink-0">
           <button
             onClick={onToggleAnswers}
-            className="px-4 py-2 rounded-lg border-2 border-slate-200 bg-white text-slate-600 font-bold text-sm hover:border-slate-300 transition-all"
+            className="px-3 py-1.5 rounded-lg border-2 border-slate-200 bg-white text-slate-600 font-bold text-sm hover:border-slate-300 transition-all"
           >
             {showAnswers ? '정답 숨기기' : '정답 보기'}
           </button>
           <button
             onClick={() => window.print()}
-            className="px-4 py-2 rounded-lg text-white font-bold text-sm transition-all hover:opacity-90"
+            className="px-3 py-1.5 rounded-lg text-white font-bold text-sm transition-all hover:opacity-90"
             style={{ background: grade.color }}
           >
             🖨️ 인쇄
@@ -121,38 +144,25 @@ export default function PreviewSection({
           {sheet.problems.map((p, i) => (
             <div
               key={i}
-              className="px-3 py-2.5 border-b border-slate-50 flex items-center gap-1 text-[13px] leading-loose overflow-hidden whitespace-nowrap"
+              className="px-3 py-2 border-b border-slate-50 text-[13px] leading-loose overflow-hidden"
             >
-              <span className="text-slate-300 text-[11px] font-bold min-w-[18px] flex-shrink-0">
-                {i + 1}.
-              </span>
-              <span
-                dangerouslySetInnerHTML={{ __html: renderDisplay(p.display, false) }}
-              />
+              <div className="flex items-baseline gap-1 whitespace-nowrap overflow-hidden">
+                <span className="text-slate-300 text-[11px] font-bold min-w-[18px] flex-shrink-0">
+                  {i + 1}.
+                </span>
+                <span
+                  dangerouslySetInnerHTML={{ __html: renderDisplay(p.display, false) }}
+                />
+              </div>
+              {showAnswers && (
+                <div className="pl-[22px] text-xs font-bold leading-none pb-1" style={{ color: grade.color }}>
+                  <span dangerouslySetInnerHTML={{ __html: p.answer }} />
+                </div>
+              )}
             </div>
           ))}
         </div>
       </div>
-
-      {/* 정답 카드 */}
-      {showAnswers && (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 pb-3 border-b border-slate-100">
-            정답
-          </h4>
-          <div className="grid grid-cols-5 gap-x-3 gap-y-2">
-            {sheet.problems.map((p, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-1 text-sm py-1.5 border-b border-dashed border-slate-100 leading-loose"
-              >
-                <span className="text-slate-300 text-[11px] font-bold flex-shrink-0">{i + 1}.</span>
-                <span dangerouslySetInnerHTML={{ __html: p.answer }} />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </section>
   );
 }

@@ -5,7 +5,6 @@ import { generateProblems, Problem } from './generators';
 import Header from './components/Header';
 import GradeSelector from './components/GradeSelector';
 import ChapterSelector from './components/ChapterSelector';
-import GenerateControls from './components/GenerateControls';
 import PreviewSection from './components/PreviewSection';
 import PrintArea from './components/PrintArea';
 import AnswersPage from './components/AnswersPage';
@@ -28,53 +27,73 @@ export default function App() {
   const grade = GRADE_DATA.find(g => g.code === gradeCode) ?? GRADE_DATA[0];
   const chapter = grade.chapters[chapIdx] ?? grade.chapters[0];
 
-  // URL에서 WID 복원
+  // 문제 생성 (explicit params → stale closure 없음)
+  const generate = useCallback((gCode: string, chIdx: number, count: number, scroll = false) => {
+    const g = GRADE_DATA.find(x => x.code === gCode) ?? GRADE_DATA[0];
+    const ch = g.chapters[chIdx] ?? g.chapters[0];
+    const baseSeed = newSeed();
+    const allSeeds = [baseSeed, ...deriveSeeds(baseSeed, count - 1)];
+    const newSheets = allSeeds.map(seed => ({
+      wid: buildWid(gCode, ch.id, seed),
+      seed,
+      problems: generateProblems(gCode, ch.id, seed, ch.perPage),
+    }));
+    setSheets(newSheets);
+    setCurrentSheet(0);
+    setShowAnswers(false);
+    history.replaceState(null, '', buildURL(newSheets[0].wid, count));
+    if (scroll) {
+      setTimeout(() => {
+        document.getElementById('preview-section')?.scrollIntoView({ behavior: 'smooth' });
+      }, 50);
+    }
+  }, []);
+
+  // 초기 로드: URL WID 복원 or 기본값으로 자동 생성
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const wid = params.get('wid');
-    const n = Math.max(1, Math.min(20, parseInt(params.get('n') ?? '1') || 1));
-    const isAnswers = params.get('answers') === '1';
-    if (!wid) return;
-    const parsed = parseWid(wid);
-    if (!parsed) return;
-    const g = GRADE_DATA.find(x => x.code === parsed.gradeCode);
-    if (!g) return;
-    const ch = g.chapters[parsed.chapIdx];
-    const allSeeds = [parsed.seed, ...deriveSeeds(parsed.seed, n - 1)];
-    const newSheets = allSeeds.map(seed => ({
-      wid: buildWid(parsed.gradeCode, ch.id, seed),
-      seed,
-      problems: generateProblems(parsed.gradeCode, ch.id, seed, ch.perPage),
-    }));
-    setGradeCode(parsed.gradeCode);
-    setChapIdx(parsed.chapIdx);
-    setSheetCount(n);
-    setSheets(newSheets);
-    setAnswersMode(isAnswers);
+    if (wid) {
+      const n = Math.max(1, Math.min(20, parseInt(params.get('n') ?? '1') || 1));
+      const isAnswers = params.get('answers') === '1';
+      const parsed = parseWid(wid);
+      if (!parsed) { generate('E2', 0, 1); return; }
+      const g = GRADE_DATA.find(x => x.code === parsed.gradeCode);
+      if (!g) { generate('E2', 0, 1); return; }
+      const ch = g.chapters[parsed.chapIdx];
+      const allSeeds = [parsed.seed, ...deriveSeeds(parsed.seed, n - 1)];
+      const newSheets = allSeeds.map(seed => ({
+        wid: buildWid(parsed.gradeCode, ch.id, seed),
+        seed,
+        problems: generateProblems(parsed.gradeCode, ch.id, seed, ch.perPage),
+      }));
+      setGradeCode(parsed.gradeCode);
+      setChapIdx(parsed.chapIdx);
+      setSheetCount(n);
+      setSheets(newSheets);
+      setAnswersMode(isAnswers);
+    } else {
+      generate('E2', 0, 1);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSelectGrade = useCallback((code: string) => {
     setGradeCode(code);
     setChapIdx(0);
-  }, []);
+    generate(code, 0, sheetCount, true);
+  }, [sheetCount, generate]);
 
-  const handleGenerate = useCallback(() => {
-    const baseSeed = newSeed();
-    const allSeeds = [baseSeed, ...deriveSeeds(baseSeed, sheetCount - 1)];
-    const newSheets = allSeeds.map(seed => ({
-      wid: buildWid(gradeCode, chapter.id, seed),
-      seed,
-      problems: generateProblems(gradeCode, chapter.id, seed, chapter.perPage),
-    }));
-    setSheets(newSheets);
-    setCurrentSheet(0);
-    setShowAnswers(false);
-    history.replaceState(null, '', buildURL(newSheets[0].wid, sheetCount));
-    setTimeout(() => {
-      document.getElementById('preview-section')?.scrollIntoView({ behavior: 'smooth' });
-    }, 50);
-  }, [gradeCode, chapter, sheetCount]);
+  const handleSelectChapter = useCallback((idx: number) => {
+    setChapIdx(idx);
+    generate(gradeCode, idx, sheetCount, true);
+  }, [gradeCode, sheetCount, generate]);
+
+  const handleChangeCount = useCallback((n: number) => {
+    const clamped = Math.max(1, Math.min(20, n));
+    setSheetCount(clamped);
+    generate(gradeCode, chapIdx, clamped);
+  }, [gradeCode, chapIdx, generate]);
 
   const handleWidNavigate = useCallback((wid: string): boolean => {
     const parsed = parseWid(wid);
@@ -103,7 +122,6 @@ export default function App() {
 
   const cols = colsForPerPage(chapter.perPage);
 
-  // 정답 화면 모드
   if (answersMode && sheets.length > 0) {
     return (
       <>
@@ -117,37 +135,23 @@ export default function App() {
     <div className="min-h-screen bg-slate-50">
       <Header gradeColor={grade.color} onWidNavigate={handleWidNavigate} />
 
-      <main className="max-w-5xl mx-auto px-4 py-10 flex flex-col gap-12">
+      <main className="max-w-5xl mx-auto px-4 py-10 flex flex-col gap-10">
 
-        {/* Step 1: 학년 */}
         <section className="flex flex-col gap-5">
           <StepLabel num={1} text="학년을 선택하세요" color={grade.color} />
           <GradeSelector selected={gradeCode} onSelect={handleSelectGrade} />
         </section>
 
-        {/* Step 2: 챕터 */}
         <section className="flex flex-col gap-5">
           <StepLabel num={2} text="챕터를 선택하세요" color={grade.color} />
           <ChapterSelector
             chapters={grade.chapters}
             selected={chapIdx}
-            onSelect={setChapIdx}
+            onSelect={handleSelectChapter}
             color={grade.color}
           />
         </section>
 
-        {/* Step 3: 생성 */}
-        <section className="flex flex-col gap-5">
-          <StepLabel num={3} text="몇 장 출력할까요?" color={grade.color} />
-          <GenerateControls
-            sheetCount={sheetCount}
-            onChangeCount={setSheetCount}
-            onGenerate={handleGenerate}
-            color={grade.color}
-          />
-        </section>
-
-        {/* 미리보기 */}
         {sheets.length > 0 && (
           <PreviewSection
             sheets={sheets}
@@ -159,6 +163,7 @@ export default function App() {
             chapter={chapter}
             cols={cols}
             sheetCount={sheetCount}
+            onChangeCount={handleChangeCount}
           />
         )}
       </main>
