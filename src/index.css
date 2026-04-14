@@ -81,7 +81,9 @@
 
   .print-problem-grid {
     display: grid;
-    gap: 5mm 8mm;
+    gap: 0 10mm;
+    min-height: 210mm;
+    align-content: space-between;
   }
   .print-cols-2 { grid-template-columns: repeat(2, 1fr); }
   .print-cols-3 { grid-template-columns: repeat(3, 1fr); }
@@ -89,21 +91,11 @@
 
   .print-problem-item {
     font-size: 13pt;
-    padding: 2.5mm 0;
+    padding: 3mm 0;
     border-bottom: 0.5pt solid #ccc;
     line-height: 1.8;
+    white-space: nowrap;
+    overflow: hidden;
   }
   .print-num { color: #aaa; font-size: 0.75em; margin-right: 3pt; }
-
-  .print-answer-grid {
-    display: grid;
-    gap: 3mm 5mm;
-    grid-template-columns: repeat(5, 1fr);
-  }
-  .print-answer-item {
-    font-size: 11pt;
-    padding: 1mm 0;
-    border-bottom: 0.3pt solid #ddd;
-    line-height: 1.8;
-  }
 }

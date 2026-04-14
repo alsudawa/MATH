@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Sheet } from '../App';
-import { GradeGroup, Chapter, buildURL } from '../data';
+import { GradeGroup, Chapter, buildAnswerURL } from '../data';
 import { renderDisplay } from '../utils';
 
 declare const QRCode: new (el: HTMLElement, opts: object) => void;
@@ -29,7 +29,7 @@ export default function PreviewSection({
     if (!qrRef.current) return;
     qrRef.current.innerHTML = '';
     new QRCode(qrRef.current, {
-      text: buildURL(sheet.wid, 1),
+      text: buildAnswerURL(sheet.wid, 1),
       width: 72, height: 72,
       colorDark: '#000000', colorLight: '#ffffff',
     });

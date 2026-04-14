@@ -8,6 +8,7 @@ import ChapterSelector from './components/ChapterSelector';
 import GenerateControls from './components/GenerateControls';
 import PreviewSection from './components/PreviewSection';
 import PrintArea from './components/PrintArea';
+import AnswersPage from './components/AnswersPage';
 
 export interface Sheet {
   wid: string;
@@ -22,6 +23,7 @@ export default function App() {
   const [sheets, setSheets] = useState<Sheet[]>([]);
   const [currentSheet, setCurrentSheet] = useState(0);
   const [showAnswers, setShowAnswers] = useState(false);
+  const [answersMode, setAnswersMode] = useState(false);
 
   const grade = GRADE_DATA.find(g => g.code === gradeCode) ?? GRADE_DATA[0];
   const chapter = grade.chapters[chapIdx] ?? grade.chapters[0];
@@ -31,6 +33,7 @@ export default function App() {
     const params = new URLSearchParams(location.search);
     const wid = params.get('wid');
     const n = Math.max(1, Math.min(20, parseInt(params.get('n') ?? '1') || 1));
+    const isAnswers = params.get('answers') === '1';
     if (!wid) return;
     const parsed = parseWid(wid);
     if (!parsed) return;
@@ -47,6 +50,7 @@ export default function App() {
     setChapIdx(parsed.chapIdx);
     setSheetCount(n);
     setSheets(newSheets);
+    setAnswersMode(isAnswers);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -89,6 +93,7 @@ export default function App() {
     setSheets([newSheet]);
     setCurrentSheet(0);
     setShowAnswers(false);
+    setAnswersMode(false);
     history.replaceState(null, '', buildURL(newSheet.wid, 1));
     setTimeout(() => {
       document.getElementById('preview-section')?.scrollIntoView({ behavior: 'smooth' });
@@ -97,6 +102,16 @@ export default function App() {
   }, []);
 
   const cols = colsForPerPage(chapter.perPage);
+
+  // 정답 화면 모드
+  if (answersMode && sheets.length > 0) {
+    return (
+      <>
+        <AnswersPage sheets={sheets} grade={grade} chapter={chapter} />
+        <PrintArea sheets={sheets} grade={grade} chapter={chapter} cols={cols} />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
