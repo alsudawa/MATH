@@ -59,18 +59,18 @@ export function fracHTML(n: number, d: number): string {
   n = n / g;
   d = d / g;
   if (d < 0) { n = -n; d = -d; }
-  if (d === 1) return String(n);
+  if (d === 1) return n < 0 ? `−${Math.abs(n)}` : String(n);
   const sign = n < 0 ? '−' : '';
   const absN = Math.abs(n);
-  return `<span class="frac">${sign}<span class="frac-num">${absN}</span><span class="frac-den">${d}</span></span>`;
+  return `${sign}<span class="frac"><span class="frac-num">${absN}</span><span class="frac-den">${d}</span></span>`;
 }
 
 /** 분수 HTML (약분 없음, display용) */
 export function fracHTMLRaw(n: number, d: number): string {
-  if (d === 1) return String(n);
+  if (d === 1) return n < 0 ? `−${Math.abs(n)}` : String(n);
   const sign = n < 0 ? '−' : '';
   const absN = Math.abs(n);
-  return `<span class="frac">${sign}<span class="frac-num">${absN}</span><span class="frac-den">${d}</span></span>`;
+  return `${sign}<span class="frac"><span class="frac-num">${absN}</span><span class="frac-den">${d}</span></span>`;
 }
 
 // ==================== BLANK RENDER ====================
