@@ -1,0 +1,108 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { font-family: 'Noto Sans KR', sans-serif; }
+
+/* 분수 */
+.frac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  margin: 0 2px;
+  line-height: 1.2;
+  font-size: 0.9em;
+}
+.frac-num {
+  border-bottom: 1.5px solid currentColor;
+  padding: 0 3px;
+  line-height: 1.5;
+}
+.frac-den { padding: 0 3px; line-height: 1.5; }
+
+/* 정답 빈칸 */
+.answer-blank {
+  display: inline-block;
+  min-width: 44px;
+  border-bottom: 2px solid #9ca3af;
+  vertical-align: bottom;
+  margin: 0 2px;
+}
+.print-answer-blank {
+  display: inline-block;
+  width: 20mm;
+  border-bottom: 1pt solid #555;
+  vertical-align: bottom;
+  margin: 0 1mm;
+}
+
+/* ===== 인쇄 ===== */
+@media print {
+  body > *:not(#print-root) { display: none !important; }
+  #print-root { display: block !important; }
+
+  @page { size: A4 portrait; margin: 15mm 15mm 12mm 15mm; }
+
+  .print-page {
+    page-break-after: always;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .print-page:last-child { page-break-after: auto; }
+
+  .print-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2pt solid #333;
+    padding-bottom: 5mm;
+    margin-bottom: 7mm;
+  }
+  .print-header-left h2 { font-size: 16pt; font-weight: 900; margin: 0 0 2mm; }
+  .print-header-left p { font-size: 10pt; color: #555; }
+  .print-info-line { margin-top: 3mm; }
+
+  .print-qr-block {
+    text-align: center;
+    font-size: 8pt;
+    font-weight: bold;
+    font-family: monospace;
+  }
+  .print-qr-block img,
+  .print-qr-block canvas {
+    width: 22mm !important;
+    height: 22mm !important;
+    display: block;
+    margin: 0 auto 1mm;
+  }
+
+  .print-problem-grid {
+    display: grid;
+    gap: 5mm 8mm;
+  }
+  .print-cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .print-cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .print-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .print-problem-item {
+    font-size: 13pt;
+    padding: 2.5mm 0;
+    border-bottom: 0.5pt solid #ccc;
+    line-height: 1.8;
+  }
+  .print-num { color: #aaa; font-size: 0.75em; margin-right: 3pt; }
+
+  .print-answer-grid {
+    display: grid;
+    gap: 3mm 5mm;
+    grid-template-columns: repeat(5, 1fr);
+  }
+  .print-answer-item {
+    font-size: 11pt;
+    padding: 1mm 0;
+    border-bottom: 0.3pt solid #ddd;
+    line-height: 1.8;
+  }
+}
