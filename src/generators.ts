@@ -14,7 +14,13 @@ type Generator = (rng: SeededRandom) => Problem;
 function coefXStr(n: number): string {
   if (n === 1) return 'x';
   if (n === -1) return '−x';
+  if (n < 0) return `−${Math.abs(n)}x`;
   return `${n}x`;
+}
+
+/** Format a plain integer for display, using typographic minus for negatives */
+function fmtN(n: number): string {
+  return n < 0 ? `−${Math.abs(n)}` : String(n);
 }
 
 function signStr(n: number, withPlus = true): string {
@@ -51,7 +57,7 @@ export const GENERATORS: Record<string, Generator> = {
 
   'E1-02': (rng) => {
     const a = rng.int(2, 9);
-    const b = rng.int(1, a);
+    const b = rng.int(1, a - 1); // 결과 > 0 보장
     return { display: `${a} − ${b} = %%BLANK%%`, answer: String(a - b) };
   },
 
@@ -138,7 +144,7 @@ export const GENERATORS: Record<string, Generator> = {
       const a = rng.int(1, 9), b = rng.int(1, 9);
       return { display: `${a} + %%BLANK%% = ${a + b}`, answer: String(b) };
     } else {
-      const c = rng.int(2, 18), b = rng.int(1, c - 1);
+      const c = rng.int(2, 12), b = rng.int(1, c - 1); // 초1-2 수 범위 12 이내
       return { display: `${c} − %%BLANK%% = ${c - b}`, answer: String(b) };
     }
   },
@@ -241,7 +247,7 @@ export const GENERATORS: Record<string, Generator> = {
     const a = b * q + r;
     return {
       display: `${a} ÷ ${b} = %%BLANK%% 나머지 %%BLANK%%`,
-      answer: `${q}, ${r}`,
+      answer: `몫 ${q}, 나머지 ${r}`,
     };
   },
 
@@ -373,11 +379,11 @@ export const GENERATORS: Record<string, Generator> = {
   },
 
   'E3-07': (rng) => {
-    // 소수 ÷ 소수, 나머지 0: 제수도 소수
+    // 소수 ÷ 소수, 나머지 0: a = (b/10) × q, 제수 bd = b/10
     const b = rng.int(2, 9);
     const q = rng.int(2, 9);
-    const a = Math.round(b * q * 10) / 10; // a = (b/10) * q → 소수 ÷ 소수
-    const bd = b / 10; // 한 자리 소수 제수
+    const a = Math.round(b * q) / 10; // (b/10) * q = b*q/10
+    const bd = b / 10;
     return {
       display: `${a.toFixed(1)} ÷ ${bd.toFixed(1)} = %%BLANK%%`,
       answer: String(q),
@@ -407,6 +413,17 @@ export const GENERATORS: Record<string, Generator> = {
     const w1 = rng.int(1, 4), n1 = rng.int(1, d - 1);
     const w2 = rng.int(1, 3), n2 = rng.int(1, d - 1);
     const imp1 = w1 * d + n1, imp2 = w2 * d + n2;
+    if (imp1 === imp2) {
+      // avoid trivial X − X = 0: bump n2 by 1 (mod d, keeping it a proper fraction)
+      const n2b = (n2 % (d - 1)) + 1;
+      const imp2b = w2 * d + n2b;
+      const diff = Math.abs(imp1 - imp2b);
+      const wr = Math.floor(diff / d), nr = diff % d;
+      const answer = nr === 0 ? String(wr) : wr === 0 ? fracHTMLRaw(nr, d) : `${wr} ${fracHTMLRaw(nr, d)}`;
+      const [bw, bn] = imp1 >= imp2b ? [w1, n1] : [w2, n2b];
+      const [sw, sn] = imp1 >= imp2b ? [w2, n2b] : [w1, n1];
+      return { display: `${bw} ${fracHTMLRaw(bn, d)} − ${sw} ${fracHTMLRaw(sn, d)} = %%BLANK%%`, answer };
+    }
 
     if (rng.int(0, 1) === 0) {
       const total = imp1 + imp2;
@@ -442,13 +459,15 @@ export const GENERATORS: Record<string, Generator> = {
         answer: result.toFixed(2),
       };
     } else {
-      // 소수 첫째 자리 × 소수 둘째 자리
+      // 소수 첫째 자리 × 소수 둘째 자리 → 최대 3자리, trailing zero 유지
       const a = rng.int(11, 30) / 10;
       const b = rng.int(11, 50) / 100;
       const result = Math.round(a * b * 1000) / 1000;
+      // toFixed(3) then strip trailing zeros but keep at least 1 decimal
+      const answer = result.toFixed(3).replace(/(\.\d*[1-9])0+$/, '$1').replace(/\.0+$/, '.0');
       return {
         display: `${a.toFixed(1)} × ${b.toFixed(2)} = %%BLANK%%`,
-        answer: String(result),
+        answer,
       };
     }
   },
@@ -532,12 +551,15 @@ export const GENERATORS: Record<string, Generator> = {
   },
 
   'M1-04': (rng) => {
-    // 일차식 동류항 정리: ax + b + cx + d
-    const a = nonZeroInt(rng, -7, 7);
-    const b = nonZeroInt(rng, -10, 10);
-    const c = nonZeroInt(rng, -7, 7);
-    const d = nonZeroInt(rng, -10, 10);
-    const rc = a + c, rk = b + d;
+    // 일차식 동류항 정리: ax + b + cx + d (trivial 0 결과 제외)
+    let a: number, b: number, c: number, d: number, rc: number, rk: number;
+    do {
+      a = nonZeroInt(rng, -7, 7);
+      b = nonZeroInt(rng, -10, 10);
+      c = nonZeroInt(rng, -7, 7);
+      d = nonZeroInt(rng, -10, 10);
+      rc = a + c; rk = b + d;
+    } while (rc === 0 && rk === 0);
 
     const display = `${coefXStr(a)} ${signStr(b)} ${signXStr(c)} ${signStr(d)} = %%BLANK%%`;
 
@@ -558,8 +580,8 @@ export const GENERATORS: Record<string, Generator> = {
     const c = a * x + b;
     const aStr = a === 1 ? 'x' : a === -1 ? '−x' : `${a}x`;
     return {
-      display: `${aStr} ${signStr(b)} = ${c},&nbsp; x = %%BLANK%%`,
-      answer: String(x),
+      display: `${aStr} ${signStr(b)} = ${fmtN(c)},&nbsp; x = %%BLANK%%`,
+      answer: fmtN(x),
     };
   },
 
@@ -569,8 +591,8 @@ export const GENERATORS: Record<string, Generator> = {
     const fmt = (n: number) => n < 0 ? `(−${Math.abs(n)})` : String(n);
     const ans = (n: number) => n < 0 ? `−${Math.abs(n)}` : String(n);
     if (type === 0) {
-      // a + b × c
-      const a = rng.int(-9, 9);
+      // a + b × c (a nonzero to avoid trivial)
+      const a = nonZeroInt(rng, -9, 9);
       const b = nonZeroInt(rng, -6, 6);
       const c = nonZeroInt(rng, -6, 6);
       return {
@@ -579,16 +601,16 @@ export const GENERATORS: Record<string, Generator> = {
       };
     } else if (type === 1) {
       // (a + b) × c
-      const a = rng.int(-8, 8);
+      const a = nonZeroInt(rng, -8, 8);
       const b = nonZeroInt(rng, -8, 8);
       const c = nonZeroInt(rng, -6, 6);
-      const inner = b < 0 ? `${a} − ${Math.abs(b)}` : `${a} + ${b}`;
+      const inner = b < 0 ? `${fmtN(a)} − ${Math.abs(b)}` : `${fmtN(a)} + ${b}`;
       return {
         display: `(${inner}) × ${fmt(c)} = %%BLANK%%`,
         answer: ans((a + b) * c),
       };
     } else {
-      // a × b − c
+      // a × b − c (c nonzero)
       const a = nonZeroInt(rng, -7, 7);
       const b = nonZeroInt(rng, -7, 7);
       const c = nonZeroInt(rng, -10, 10);
@@ -699,18 +721,19 @@ export const GENERATORS: Record<string, Generator> = {
   'M2-03': (rng) => {
     // 단항식·다항식 계산
     const a = rng.int(1, 5), b = rng.int(1, 5);
+    const xCoef = (c: number, exp: number) => `${c === 1 ? '' : c}x<sup>${exp}</sup>`;
     if (rng.int(0, 1) === 0) {
       const m = rng.int(1, 3), n = rng.int(1, 3);
       return {
         display: `${a}x<sup>${m}</sup> × ${b}x<sup>${n}</sup> = %%BLANK%%`,
-        answer: `${a * b}x<sup>${m + n}</sup>`,
+        answer: xCoef(a * b, m + n),
       };
     } else {
       const m = rng.int(2, 4), n = rng.int(1, m - 1);
       const coef = a * b;
       return {
         display: `${coef}x<sup>${m}</sup> ÷ ${b}x<sup>${n}</sup> = %%BLANK%%`,
-        answer: `${a}x<sup>${m - n}</sup>`,
+        answer: xCoef(a, m - n),
       };
     }
   },
@@ -726,7 +749,7 @@ export const GENERATORS: Record<string, Generator> = {
     const solOp = a < 0 ? flipMap[op] : op;
     const aStr = a === 1 ? 'x' : a === -1 ? '−x' : `${a}x`;
     return {
-      display: `${aStr} ${signStr(b)} ${op} ${c},&nbsp; x %%BLANK%%`,
+      display: `${aStr} ${signStr(b)} ${op} ${fmtN(c)},&nbsp; x %%BLANK%%`,
       answer: `${solOp} ${fracHTML(c - b, a)}`,
     };
   },
@@ -751,8 +774,8 @@ export const GENERATORS: Record<string, Generator> = {
 
     const xTerm1 = termStr(a1, 'x'), yTerm1 = termStr(Math.abs(b1), 'y');
     const xTerm2 = termStr(a2, 'x'), yTerm2 = termStr(Math.abs(b2), 'y');
-    const r1 = `${xTerm1}${b1 >= 0 ? ' + ' : ' − '}${yTerm1} = ${c1}`;
-    const r2 = `${xTerm2}${b2 >= 0 ? ' + ' : ' − '}${yTerm2} = ${c2}`;
+    const r1 = `${xTerm1}${b1 >= 0 ? ' + ' : ' − '}${yTerm1} = ${fmtN(c1)}`;
+    const r2 = `${xTerm2}${b2 >= 0 ? ' + ' : ' − '}${yTerm2} = ${fmtN(c2)}`;
 
     const ansX = x < 0 ? `−${Math.abs(x)}` : String(x);
     const ansY = y < 0 ? `−${Math.abs(y)}` : String(y);
@@ -764,6 +787,8 @@ export const GENERATORS: Record<string, Generator> = {
 
   'M2-06': (rng) => {
     // 단항식의 곱셈/나눗셈 (이변수 x, y)
+    const xyCoef = (c: number, xe: number, ye: number) =>
+      `${c === 1 ? '' : c}x<sup>${xe}</sup>y<sup>${ye}</sup>`;
     if (rng.int(0, 1) === 0) {
       // axᵐyⁿ × bxᵖyᵍ
       const a = rng.int(1, 4), b = rng.int(1, 4);
@@ -771,7 +796,7 @@ export const GENERATORS: Record<string, Generator> = {
       const p = rng.int(1, 3), q = rng.int(1, 3);
       return {
         display: `${a}x<sup>${m}</sup>y<sup>${n}</sup> × ${b}x<sup>${p}</sup>y<sup>${q}</sup> = %%BLANK%%`,
-        answer: `${a * b}x<sup>${m + p}</sup>y<sup>${n + q}</sup>`,
+        answer: xyCoef(a * b, m + p, n + q),
       };
     } else {
       // axᵐyⁿ ÷ bxᵖyᵍ (a divisible by b, m > p, n > q)
@@ -782,7 +807,7 @@ export const GENERATORS: Record<string, Generator> = {
       const p = rng.int(1, m - 1), q = rng.int(1, n - 1);
       return {
         display: `${a}x<sup>${m}</sup>y<sup>${n}</sup> ÷ ${b}x<sup>${p}</sup>y<sup>${q}</sup> = %%BLANK%%`,
-        answer: `${qc}x<sup>${m - p}</sup>y<sup>${n - q}</sup>`,
+        answer: xyCoef(qc, m - p, n - q),
       };
     }
   },
@@ -860,8 +885,9 @@ export const GENERATORS: Record<string, Generator> = {
         answer: `(x + ${a})(x − ${a})`,
       };
     } else {
-      // x² + (a+b)x + ab = (x+a)(x+b), a ≠ b
-      const b = rng.int(1, 8);
+      // x² + (a+b)x + ab = (x+a)(x+b), a ≠ b (避免與完全平方 type 0/1 重複)
+      let b: number;
+      do { b = rng.int(1, 8); } while (b === a);
       const sumAB = a + b;
       const prodAB = a * b;
       return {
@@ -873,12 +899,15 @@ export const GENERATORS: Record<string, Generator> = {
 
   'M3-04': (rng) => {
     // 이차방정식: (x−r1)(x−r2)=0 전개
-    const r1 = rng.int(-8, 8), r2 = rng.int(-8, 8);
+    let r1: number, r2: number;
+    do { r1 = rng.int(-8, 8); r2 = rng.int(-8, 8); } while (r1 === 0 && r2 === 0);
     const bCoef = -(r1 + r2);
     const cCoef = r1 * r2;
     const bStr = bCoef > 0 ? ` + ${bCoef}x` : bCoef < 0 ? ` − ${Math.abs(bCoef)}x` : '';
     const cStr = cCoef > 0 ? ` + ${cCoef}` : cCoef < 0 ? ` − ${Math.abs(cCoef)}` : '';
-    const answer = r1 === r2 ? `x = ${r1}` : `x = ${r1} 또는 x = ${r2}`;
+    const answer = r1 === r2
+      ? `x = ${fmtN(r1)}`
+      : `x = ${fmtN(r1)} 또는 x = ${fmtN(r2)}`;
     return {
       display: `x²${bStr}${cStr} = 0`,
       answer,
