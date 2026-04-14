@@ -9,8 +9,13 @@ interface Props {
 }
 
 export default function AnswersPage({ sheets, grade, chapter }: Props) {
+  // answers page: max 2 cols on mobile, up to perPage-based cols on wider screens
   const cols = colsForPerPage(chapter.perPage);
-  const gridCls = `grid gap-0 ${cols === 2 ? 'grid-cols-2' : cols === 3 ? 'grid-cols-3' : 'grid-cols-4'}`;
+  const gridCls = cols === 2
+    ? 'grid grid-cols-1 sm:grid-cols-2'
+    : cols === 3
+      ? 'grid grid-cols-2 sm:grid-cols-3'
+      : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4';
 
   return (
     <>
@@ -78,7 +83,7 @@ export default function AnswersPage({ sheets, grade, chapter }: Props) {
                   key={i}
                   className="px-3 py-2 border-b border-slate-50 text-[13px] leading-loose overflow-hidden"
                 >
-                  <div className="flex items-baseline gap-1 whitespace-nowrap overflow-hidden">
+                  <div className="flex items-baseline gap-1 flex-wrap">
                     <span className="text-slate-300 text-[11px] font-bold min-w-[18px] flex-shrink-0">
                       {i + 1}.
                     </span>
