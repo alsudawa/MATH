@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Sheet } from '../App';
 import { GradeGroup, Chapter, buildAnswerURL } from '../data';
-import { renderDisplay } from '../utils';
+import { renderDisplay, renderWithAnswer } from '../utils';
 
 declare const QRCode: new (el: HTMLElement, opts: object) => void;
 
@@ -118,21 +118,16 @@ export default function PreviewSection({
           {sheet.problems.map((p, i) => (
             <div
               key={i}
-              className="px-3 py-2 border-b border-slate-50 text-[13px] leading-loose overflow-hidden"
+              className="px-3 py-2 border-b border-slate-50 text-[13px] leading-loose"
             >
-              <div className="flex items-baseline gap-1 whitespace-nowrap overflow-hidden">
-                <span className="text-slate-300 text-[11px] font-bold min-w-[18px] flex-shrink-0">
-                  {i + 1}.
-                </span>
-                <span
-                  dangerouslySetInnerHTML={{ __html: renderDisplay(p.display, false) }}
-                />
-              </div>
-              {showAnswers && (
-                <div className="pl-[22px] text-xs font-bold leading-none pb-1" style={{ color: grade.color }}>
-                  <span dangerouslySetInnerHTML={{ __html: p.answer }} />
-                </div>
-              )}
+              <span className="text-slate-300 text-[11px] font-bold mr-1">{i + 1}.</span>
+              <span
+                dangerouslySetInnerHTML={{
+                  __html: showAnswers
+                    ? renderWithAnswer(p.display, p.answer, grade.color)
+                    : renderDisplay(p.display, false),
+                }}
+              />
             </div>
           ))}
         </div>

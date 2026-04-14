@@ -87,3 +87,23 @@ export function renderDisplay(display: string, forPrint: boolean): string {
     '<span class="answer-blank">&nbsp;&nbsp;&nbsp;</span>'
   );
 }
+
+/** Replace %%BLANK%% markers with the answer rendered inline in grade colour.
+ *  For multi-blank problems (e.g. simultaneous equations), the answer string
+ *  is split on ", " so each blank gets its own value. */
+export function renderWithAnswer(display: string, answer: string, color: string): string {
+  const blanks = (display.match(/%%BLANK%%/g) || []).length;
+  if (blanks === 0) return display;
+
+  const styled = (val: string) =>
+    `<span style="color:${color};font-weight:700;border-bottom:1.5px solid ${color};padding:0 3px;">${val}</span>`;
+
+  if (blanks === 1) {
+    return display.replace('%%BLANK%%', styled(answer));
+  }
+
+  // Multi-blank: split "x = 3, y = -2" → values by stripping variable prefixes
+  const vals = answer.split(', ').map(s => s.replace(/^[a-z]\s*=\s*/, ''));
+  let idx = 0;
+  return display.replace(/%%BLANK%%/g, () => styled(vals[idx++] ?? answer));
+}

@@ -1,6 +1,6 @@
 import { Sheet } from '../App';
 import { GradeGroup, Chapter, colsForPerPage } from '../data';
-import { renderDisplay } from '../utils';
+import { renderWithAnswer } from '../utils';
 
 interface Props {
   sheets: Sheet[];
@@ -81,17 +81,10 @@ export default function AnswersPage({ sheets, grade, chapter }: Props) {
               {sheet.problems.map((p, i) => (
                 <div
                   key={i}
-                  className="px-3 py-2 border-b border-slate-50 text-[13px] leading-loose overflow-hidden"
+                  className="px-3 py-2 border-b border-slate-50 text-[13px] leading-loose"
                 >
-                  <div className="flex items-baseline gap-1 flex-wrap">
-                    <span className="text-slate-300 text-[11px] font-bold min-w-[18px] flex-shrink-0">
-                      {i + 1}.
-                    </span>
-                    <span dangerouslySetInnerHTML={{ __html: renderDisplay(p.display, false) }} />
-                  </div>
-                  <div className="pl-[22px] text-xs font-bold leading-none pb-1" style={{ color: grade.color }}>
-                    <span dangerouslySetInnerHTML={{ __html: p.answer }} />
-                  </div>
+                  <span className="text-slate-300 text-[11px] font-bold mr-1">{i + 1}.</span>
+                  <span dangerouslySetInnerHTML={{ __html: renderWithAnswer(p.display, p.answer, grade.color) }} />
                 </div>
               ))}
             </div>
