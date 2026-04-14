@@ -276,9 +276,12 @@ export const GENERATORS: Record<string, Generator> = {
         answer: fracHTML(a * q + b * p, p * q),
       };
     } else {
-      const a = rng.int(1, p - 1);
-      let b: number;
-      do { b = rng.int(1, q - 1); } while (a * q <= b * p);
+      // ensure a/p > b/q: regenerate both until satisfied
+      let a: number, b: number;
+      do {
+        a = rng.int(1, p - 1);
+        b = rng.int(1, q - 1);
+      } while (a * q <= b * p);
       return {
         display: `${fracHTMLRaw(a, p)} − ${fracHTMLRaw(b, q)} = %%BLANK%%`,
         answer: fracHTML(a * q - b * p, p * q),
@@ -565,7 +568,7 @@ export const GENERATORS: Record<string, Generator> = {
 
     let answer: string;
     if (rc === 0 && rk === 0) answer = '0';
-    else if (rc === 0) answer = String(rk);
+    else if (rc === 0) answer = fmtN(rk);
     else if (rk === 0) answer = coefXStr(rc);
     else answer = `${coefXStr(rc)} ${signStr(rk)}`;
 
@@ -663,7 +666,7 @@ export const GENERATORS: Record<string, Generator> = {
 
     let answer: string;
     if (rc === 0 && rk === 0) answer = '0';
-    else if (rc === 0) answer = String(rk);
+    else if (rc === 0) answer = fmtN(rk);
     else if (rk === 0) answer = coefXStr(rc);
     else answer = `${coefXStr(rc)} ${signStr(rk)}`;
 
@@ -906,10 +909,10 @@ export const GENERATORS: Record<string, Generator> = {
     const bStr = bCoef > 0 ? ` + ${bCoef}x` : bCoef < 0 ? ` − ${Math.abs(bCoef)}x` : '';
     const cStr = cCoef > 0 ? ` + ${cCoef}` : cCoef < 0 ? ` − ${Math.abs(cCoef)}` : '';
     const answer = r1 === r2
-      ? `x = ${fmtN(r1)}`
-      : `x = ${fmtN(r1)} 또는 x = ${fmtN(r2)}`;
+      ? fmtN(r1)
+      : `${fmtN(r1)} 또는 ${fmtN(r2)}`;
     return {
-      display: `x²${bStr}${cStr} = 0`,
+      display: `x²${bStr}${cStr} = 0,&nbsp; x = %%BLANK%%`,
       answer,
     };
   },
