@@ -96,7 +96,7 @@ export function renderWithAnswer(display: string, answer: string, color: string)
   if (blanks === 0) return display;
 
   const styled = (val: string) =>
-    `<span style="color:${color};font-weight:700;border-bottom:1.5px solid ${color};padding:0 3px;">${val}</span>`;
+    `<span style="color:${color};font-weight:700;">${val}</span>`;
 
   if (blanks === 1) {
     return display.replace('%%BLANK%%', styled(answer));
