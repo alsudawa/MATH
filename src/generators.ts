@@ -128,6 +128,28 @@ export const GENERATORS: Record<string, Generator> = {
     return { display: `${table} × ${n} = %%BLANK%%`, answer: String(table * n) };
   },
 
+  'E1-10': (rng) => {
+    // 덧셈과 뺄셈의 관계 (역연산): □ 찾기
+    const type = rng.int(0, 2);
+    if (type === 0) {
+      const a = rng.int(1, 9), b = rng.int(1, 9);
+      return { display: `%%BLANK%% + ${b} = ${a + b}`, answer: String(a) };
+    } else if (type === 1) {
+      const a = rng.int(1, 9), b = rng.int(1, 9);
+      return { display: `${a} + %%BLANK%% = ${a + b}`, answer: String(b) };
+    } else {
+      const c = rng.int(2, 18), b = rng.int(1, c - 1);
+      return { display: `${c} − %%BLANK%% = ${c - b}`, answer: String(b) };
+    }
+  },
+
+  'E1-11': (rng) => {
+    // 곱셈 기초 (3단·4단)
+    const table = rng.int(0, 1) === 0 ? 3 : 4;
+    const n = rng.int(1, 9);
+    return { display: `${table} × ${n} = %%BLANK%%`, answer: String(table * n) };
+  },
+
   // ===== E2 (초등 3~4학년) =====
 
   'E2-01': (rng) => {
@@ -207,6 +229,73 @@ export const GENERATORS: Record<string, Generator> = {
       return {
         display: `${big.toFixed(1)} − ${small.toFixed(1)} = %%BLANK%%`,
         answer: (big - small).toFixed(1),
+      };
+    }
+  },
+
+  'E2-10': (rng) => {
+    // 나머지가 있는 나눗셈
+    const b = rng.int(2, 9);
+    const q = rng.int(1, 9);
+    const r = rng.int(1, b - 1);
+    const a = b * q + r;
+    return {
+      display: `${a} ÷ ${b} = %%BLANK%% 나머지 %%BLANK%%`,
+      answer: `${q}, ${r}`,
+    };
+  },
+
+  'E2-11': (rng) => {
+    // 세 자리 × 두 자리
+    const a = rng.int(101, 499);
+    const b = rng.int(11, 49);
+    return { display: `${a} × ${b} = %%BLANK%%`, answer: String(a * b) };
+  },
+
+  'E2-12': (rng) => {
+    // 네 자리 ÷ 두 자리, 나머지 0
+    const b = rng.int(12, 50);
+    const q = rng.int(Math.ceil(1000 / b), Math.min(Math.floor(9999 / b), 200));
+    return { display: `${b * q} ÷ ${b} = %%BLANK%%`, answer: String(q) };
+  },
+
+  'E2-13': (rng) => {
+    // 분수 덧셈/뺄셈 (다른 분모, 통분 필요)
+    let p: number, q: number;
+    do { p = rng.int(2, 8); q = rng.int(2, 8); } while (p === q);
+    if (rng.int(0, 1) === 0) {
+      const a = rng.int(1, p - 1), b = rng.int(1, q - 1);
+      return {
+        display: `${fracHTMLRaw(a, p)} + ${fracHTMLRaw(b, q)} = %%BLANK%%`,
+        answer: fracHTML(a * q + b * p, p * q),
+      };
+    } else {
+      const a = rng.int(1, p - 1);
+      let b: number;
+      do { b = rng.int(1, q - 1); } while (a * q <= b * p);
+      return {
+        display: `${fracHTMLRaw(a, p)} − ${fracHTMLRaw(b, q)} = %%BLANK%%`,
+        answer: fracHTML(a * q - b * p, p * q),
+      };
+    }
+  },
+
+  'E2-14': (rng) => {
+    // 소수 덧셈/뺄셈 (소수 둘째 자리)
+    const a = rng.int(101, 999) / 100;
+    const b = rng.int(101, 999) / 100;
+    if (rng.int(0, 1) === 0) {
+      const result = Math.round((a + b) * 100) / 100;
+      return {
+        display: `${a.toFixed(2)} + ${b.toFixed(2)} = %%BLANK%%`,
+        answer: result.toFixed(2),
+      };
+    } else {
+      const [big, small] = a >= b ? [a, b] : [b, a];
+      const result = Math.round((big - small) * 100) / 100;
+      return {
+        display: `${big.toFixed(2)} − ${small.toFixed(2)} = %%BLANK%%`,
+        answer: result.toFixed(2),
       };
     }
   },
@@ -292,6 +381,87 @@ export const GENERATORS: Record<string, Generator> = {
     return {
       display: `${a.toFixed(1)} ÷ ${bd.toFixed(1)} = %%BLANK%%`,
       answer: String(q),
+    };
+  },
+
+  'E3-08': (rng) => {
+    // 분수의 곱셈 (정수 × 분수)
+    const n = rng.int(2, 9);
+    const an = rng.int(1, 6), ad = rng.int(2, 8);
+    if (rng.int(0, 1) === 0) {
+      return {
+        display: `${n} × ${fracHTMLRaw(an, ad)} = %%BLANK%%`,
+        answer: fracHTML(n * an, ad),
+      };
+    } else {
+      return {
+        display: `${fracHTMLRaw(an, ad)} × ${n} = %%BLANK%%`,
+        answer: fracHTML(n * an, ad),
+      };
+    }
+  },
+
+  'E3-09': (rng) => {
+    // 대분수의 덧셈과 뺄셈
+    const d = rng.int(3, 8);
+    const w1 = rng.int(1, 4), n1 = rng.int(1, d - 1);
+    const w2 = rng.int(1, 3), n2 = rng.int(1, d - 1);
+    const imp1 = w1 * d + n1, imp2 = w2 * d + n2;
+
+    if (rng.int(0, 1) === 0) {
+      const total = imp1 + imp2;
+      const wr = Math.floor(total / d), nr = total % d;
+      const answer = nr === 0 ? String(wr) : `${wr} ${fracHTMLRaw(nr, d)}`;
+      return {
+        display: `${w1} ${fracHTMLRaw(n1, d)} + ${w2} ${fracHTMLRaw(n2, d)} = %%BLANK%%`,
+        answer,
+      };
+    } else {
+      const [big, small] = imp1 >= imp2 ? [imp1, imp2] : [imp2, imp1];
+      const [bw, bn] = imp1 >= imp2 ? [w1, n1] : [w2, n2];
+      const [sw, sn] = imp1 >= imp2 ? [w2, n2] : [w1, n1];
+      const diff = big - small;
+      const wr = Math.floor(diff / d), nr = diff % d;
+      const answer = nr === 0 ? String(wr) : wr === 0 ? fracHTMLRaw(nr, d) : `${wr} ${fracHTMLRaw(nr, d)}`;
+      return {
+        display: `${bw} ${fracHTMLRaw(bn, d)} − ${sw} ${fracHTMLRaw(sn, d)} = %%BLANK%%`,
+        answer,
+      };
+    }
+  },
+
+  'E3-10': (rng) => {
+    // 소수의 곱셈 (둘째 자리 포함)
+    if (rng.int(0, 1) === 0) {
+      // 자연수 × 소수 둘째 자리
+      const a = rng.int(2, 9);
+      const b = rng.int(11, 99) / 100;
+      const result = Math.round(a * b * 100) / 100;
+      return {
+        display: `${a} × ${b.toFixed(2)} = %%BLANK%%`,
+        answer: result.toFixed(2),
+      };
+    } else {
+      // 소수 첫째 자리 × 소수 둘째 자리
+      const a = rng.int(11, 30) / 10;
+      const b = rng.int(11, 50) / 100;
+      const result = Math.round(a * b * 1000) / 1000;
+      return {
+        display: `${a.toFixed(1)} × ${b.toFixed(2)} = %%BLANK%%`,
+        answer: String(result),
+      };
+    }
+  },
+
+  'E3-11': (rng) => {
+    // 소수의 나눗셈 (소수 몫: 소수 ÷ 정수 = 소수)
+    let q: number;
+    do { q = rng.int(11, 99) / 10; } while (q % 1 === 0);
+    const b = rng.int(2, 8);
+    const a = Math.round(q * b * 10) / 10;
+    return {
+      display: `${a.toFixed(1)} ÷ ${b} = %%BLANK%%`,
+      answer: q.toFixed(1),
     };
   },
 
@@ -390,6 +560,94 @@ export const GENERATORS: Record<string, Generator> = {
     return {
       display: `${aStr} ${signStr(b)} = ${c},&nbsp; x = %%BLANK%%`,
       answer: String(x),
+    };
+  },
+
+  'M1-06': (rng) => {
+    // 정수의 혼합계산 (괄호 포함, 연산 순서)
+    const type = rng.int(0, 2);
+    const fmt = (n: number) => n < 0 ? `(−${Math.abs(n)})` : String(n);
+    const ans = (n: number) => n < 0 ? `−${Math.abs(n)}` : String(n);
+    if (type === 0) {
+      // a + b × c
+      const a = rng.int(-9, 9);
+      const b = nonZeroInt(rng, -6, 6);
+      const c = nonZeroInt(rng, -6, 6);
+      return {
+        display: `${fmt(a)} + ${fmt(b)} × ${fmt(c)} = %%BLANK%%`,
+        answer: ans(a + b * c),
+      };
+    } else if (type === 1) {
+      // (a + b) × c
+      const a = rng.int(-8, 8);
+      const b = nonZeroInt(rng, -8, 8);
+      const c = nonZeroInt(rng, -6, 6);
+      const inner = b < 0 ? `${a} − ${Math.abs(b)}` : `${a} + ${b}`;
+      return {
+        display: `(${inner}) × ${fmt(c)} = %%BLANK%%`,
+        answer: ans((a + b) * c),
+      };
+    } else {
+      // a × b − c
+      const a = nonZeroInt(rng, -7, 7);
+      const b = nonZeroInt(rng, -7, 7);
+      const c = nonZeroInt(rng, -10, 10);
+      return {
+        display: `${fmt(a)} × ${fmt(b)} − ${fmt(c)} = %%BLANK%%`,
+        answer: ans(a * b - c),
+      };
+    }
+  },
+
+  'M1-07': (rng) => {
+    // 부호가 있는 식의 계산 (이중 부호, 괄호 분배)
+    const type = rng.int(0, 2);
+    const ans = (n: number) => n < 0 ? `−${Math.abs(n)}` : String(n);
+    if (type === 0) {
+      // −(−a) + b
+      const a = rng.int(1, 15);
+      const b = rng.int(1, 10);
+      return { display: `−(−${a}) + ${b} = %%BLANK%%`, answer: ans(a + b) };
+    } else if (type === 1) {
+      // a − (b − c): distribute minus sign
+      const a = rng.int(1, 20);
+      const b = rng.int(1, 15);
+      const c = rng.int(1, 10);
+      return {
+        display: `${a} − (${b} − ${c}) = %%BLANK%%`,
+        answer: ans(a - b + c),
+      };
+    } else {
+      // −(a + b) + c
+      const a = rng.int(1, 10);
+      const b = rng.int(1, 10);
+      const c = rng.int(1, 25);
+      return {
+        display: `−(${a} + ${b}) + ${c} = %%BLANK%%`,
+        answer: ans(-(a + b) + c),
+      };
+    }
+  },
+
+  'M1-08': (rng) => {
+    // 일차식의 덧셈과 뺄셈: (ax+b) ± (cx+d)
+    const a = nonZeroInt(rng, -6, 6);
+    const b = nonZeroInt(rng, -9, 9);
+    const c = nonZeroInt(rng, -6, 6);
+    const d = nonZeroInt(rng, -9, 9);
+    const op = rng.int(0, 1) === 0 ? '+' : '−';
+    const rc = op === '+' ? a + c : a - c;
+    const rk = op === '+' ? b + d : b - d;
+
+    let answer: string;
+    if (rc === 0 && rk === 0) answer = '0';
+    else if (rc === 0) answer = String(rk);
+    else if (rk === 0) answer = coefXStr(rc);
+    else answer = `${coefXStr(rc)} ${signStr(rk)}`;
+
+    return {
+      display: `(${coefXStr(a)} ${signStr(b)}) ${op} (${coefXStr(c)} ${signStr(d)}) = %%BLANK%%`,
+      answer,
     };
   },
 
@@ -502,6 +760,31 @@ export const GENERATORS: Record<string, Generator> = {
       display: `${r1}<br>${r2}<br>x = %%BLANK%%, &nbsp;y = %%BLANK%%`,
       answer: `x = ${ansX}, y = ${ansY}`,
     };
+  },
+
+  'M2-06': (rng) => {
+    // 단항식의 곱셈/나눗셈 (이변수 x, y)
+    if (rng.int(0, 1) === 0) {
+      // axᵐyⁿ × bxᵖyᵍ
+      const a = rng.int(1, 4), b = rng.int(1, 4);
+      const m = rng.int(1, 3), n = rng.int(1, 3);
+      const p = rng.int(1, 3), q = rng.int(1, 3);
+      return {
+        display: `${a}x<sup>${m}</sup>y<sup>${n}</sup> × ${b}x<sup>${p}</sup>y<sup>${q}</sup> = %%BLANK%%`,
+        answer: `${a * b}x<sup>${m + p}</sup>y<sup>${n + q}</sup>`,
+      };
+    } else {
+      // axᵐyⁿ ÷ bxᵖyᵍ (a divisible by b, m > p, n > q)
+      const b = rng.int(1, 4);
+      const qc = rng.int(1, 4);
+      const a = b * qc;
+      const m = rng.int(2, 5), n = rng.int(2, 5);
+      const p = rng.int(1, m - 1), q = rng.int(1, n - 1);
+      return {
+        display: `${a}x<sup>${m}</sup>y<sup>${n}</sup> ÷ ${b}x<sup>${p}</sup>y<sup>${q}</sup> = %%BLANK%%`,
+        answer: `${qc}x<sup>${m - p}</sup>y<sup>${n - q}</sup>`,
+      };
+    }
   },
 
   // ===== M3 (중학교 3학년) =====

@@ -36,6 +36,8 @@ export const GRADE_DATA: GradeGroup[] = [
       { id: '07', name: '세 수의 덧셈과 뺄셈', perPage: 16 },
       { id: '08', name: '세 자리 수 덧셈/뺄셈', perPage: 16 },
       { id: '09', name: '곱셈 기초 (1단·2단·5단)', perPage: 20 },
+      { id: '10', name: '덧셈과 뺄셈의 관계 (역연산)', perPage: 20 },
+      { id: '11', name: '곱셈 기초 (3단·4단)', perPage: 20 },
     ],
   },
   {
@@ -50,6 +52,11 @@ export const GRADE_DATA: GradeGroup[] = [
       { id: '07', name: '세 자리 ÷ 두 자리', perPage: 12 },
       { id: '08', name: '분수 덧셈/뺄셈 (같은 분모)', perPage: 16 },
       { id: '09', name: '소수 덧셈/뺄셈 (소수 첫째 자리)', perPage: 16 },
+      { id: '10', name: '나머지가 있는 나눗셈', perPage: 16 },
+      { id: '11', name: '세 자리 × 두 자리', perPage: 12 },
+      { id: '12', name: '네 자리 수 나눗셈', perPage: 12 },
+      { id: '13', name: '분수 덧셈/뺄셈 (다른 분모)', perPage: 16 },
+      { id: '14', name: '소수 덧셈/뺄셈 (소수 둘째 자리)', perPage: 16 },
     ],
   },
   {
@@ -62,6 +69,10 @@ export const GRADE_DATA: GradeGroup[] = [
       { id: '05', name: '소수의 곱셈', perPage: 16 },
       { id: '06', name: '분수의 나눗셈 (분수÷분수)', perPage: 12 },
       { id: '07', name: '소수의 나눗셈', perPage: 16 },
+      { id: '08', name: '분수의 곱셈 (정수×분수)', perPage: 16 },
+      { id: '09', name: '대분수의 덧셈과 뺄셈', perPage: 12 },
+      { id: '10', name: '소수의 곱셈 (둘째 자리)', perPage: 16 },
+      { id: '11', name: '소수의 나눗셈 (소수 몫)', perPage: 16 },
     ],
   },
   {
@@ -72,6 +83,9 @@ export const GRADE_DATA: GradeGroup[] = [
       { id: '03', name: '유리수의 사칙연산', perPage: 12 },
       { id: '04', name: '일차식의 계산 (동류항 정리)', perPage: 12 },
       { id: '05', name: '일차방정식 풀기', perPage: 10 },
+      { id: '06', name: '정수의 혼합계산 (괄호 포함)', perPage: 12 },
+      { id: '07', name: '부호가 있는 식의 계산', perPage: 12 },
+      { id: '08', name: '일차식의 덧셈과 뺄셈', perPage: 12 },
     ],
   },
   {
@@ -82,6 +96,7 @@ export const GRADE_DATA: GradeGroup[] = [
       { id: '03', name: '단항식·다항식의 계산', perPage: 10 },
       { id: '04', name: '일차부등식 풀기', perPage: 10 },
       { id: '05', name: '연립일차방정식 풀기', perPage: 8 },
+      { id: '06', name: '단항식의 곱셈/나눗셈 (이변수)', perPage: 12 },
     ],
   },
   {
