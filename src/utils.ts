@@ -53,24 +53,42 @@ export function lcm(a: number, b: number): number {
 
 // ==================== FRACTION HTML ====================
 
-/** 분수 HTML (GCD 약분 적용, answer용) */
-export function fracHTML(n: number, d: number): string {
-  const g = gcd(Math.abs(n), Math.abs(d));
-  n = n / g;
-  d = d / g;
-  if (d < 0) { n = -n; d = -d; }
-  if (d === 1) return String(n);
-  const sign = n < 0 ? '−' : '';
-  const absN = Math.abs(n);
-  return `<span class="frac">${sign}<span class="frac-num">${absN}</span><span class="frac-den">${d}</span></span>`;
+import katex from 'katex';
+
+function K(latex: string): string {
+  return katex.renderToString(latex, { throwOnError: false, output: 'html' });
 }
 
-/** 분수 HTML (약분 없음, display용) */
+/** 분수 HTML — GCD 약분 적용 (answer용) */
+export function fracHTML(n: number, d: number): string {
+  const g = gcd(Math.abs(n), Math.abs(d));
+  n /= g; d /= g;
+  if (d < 0) { n = -n; d = -d; }
+  if (d === 1) return n < 0 ? `−${Math.abs(n)}` : String(n);
+  const latex = n < 0 ? `-\\dfrac{${Math.abs(n)}}{${d}}` : `\\dfrac{${n}}{${d}}`;
+  return K(latex);
+}
+
+/** 분수 HTML — 약분 없음 (display용) */
 export function fracHTMLRaw(n: number, d: number): string {
-  if (d === 1) return String(n);
-  const sign = n < 0 ? '−' : '';
-  const absN = Math.abs(n);
-  return `<span class="frac">${sign}<span class="frac-num">${absN}</span><span class="frac-den">${d}</span></span>`;
+  if (d === 1) return n < 0 ? `−${Math.abs(n)}` : String(n);
+  const latex = n < 0 ? `-\\dfrac{${Math.abs(n)}}{${d}}` : `\\dfrac{${n}}{${d}}`;
+  return K(latex);
+}
+
+/** 음수 분수에 괄호 붙이기 (display용) */
+export function fracHTMLParenRaw(n: number, d: number): string {
+  if (d === 1) return n < 0 ? `(−${Math.abs(n)})` : String(n);
+  const latex = n < 0
+    ? `\\left(-\\dfrac{${Math.abs(n)}}{${d}}\\right)`
+    : `\\dfrac{${n}}{${d}}`;
+  return K(latex);
+}
+
+/** 근호 (vinculum 포함), coef=1은 표시 안 함 */
+export function kSqrt(n: number, coef = 1): string {
+  const prefix = coef === 1 ? '' : String(coef);
+  return K(`${prefix}\\sqrt{${n}}`);
 }
 
 // ==================== BLANK RENDER ====================
