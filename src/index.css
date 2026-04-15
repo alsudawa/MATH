@@ -103,8 +103,7 @@
     padding: 3mm 0;
     border-bottom: 0.5pt solid #ccc;
     line-height: 1.8;
-    white-space: nowrap;
-    overflow: hidden;
+    overflow-wrap: break-word;
   }
   .print-num { color: #aaa; font-size: 0.75em; margin-right: 3pt; }
 }

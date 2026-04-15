@@ -416,13 +416,16 @@ export const GENERATORS: Record<string, Generator> = {
     const w1 = rng.int(1, 4), n1 = rng.int(1, d - 1);
     const w2 = rng.int(1, 3), n2 = rng.int(1, d - 1);
     const imp1 = w1 * d + n1, imp2 = w2 * d + n2;
+    // helper: build mixed-number answer with properly reduced fractional part
+    const mixedAns = (wr: number, nr: number) =>
+      nr === 0 ? String(wr) : wr === 0 ? fracHTML(nr, d) : `${wr} ${fracHTML(nr, d)}`;
+
     if (imp1 === imp2) {
       // avoid trivial X − X = 0: bump n2 by 1 (mod d, keeping it a proper fraction)
       const n2b = (n2 % (d - 1)) + 1;
       const imp2b = w2 * d + n2b;
       const diff = Math.abs(imp1 - imp2b);
-      const wr = Math.floor(diff / d), nr = diff % d;
-      const answer = nr === 0 ? String(wr) : wr === 0 ? fracHTMLRaw(nr, d) : `${wr} ${fracHTMLRaw(nr, d)}`;
+      const answer = mixedAns(Math.floor(diff / d), diff % d);
       const [bw, bn] = imp1 >= imp2b ? [w1, n1] : [w2, n2b];
       const [sw, sn] = imp1 >= imp2b ? [w2, n2b] : [w1, n1];
       return { display: `${bw} ${fracHTMLRaw(bn, d)} − ${sw} ${fracHTMLRaw(sn, d)} = %%BLANK%%`, answer };
@@ -430,8 +433,7 @@ export const GENERATORS: Record<string, Generator> = {
 
     if (rng.int(0, 1) === 0) {
       const total = imp1 + imp2;
-      const wr = Math.floor(total / d), nr = total % d;
-      const answer = nr === 0 ? String(wr) : `${wr} ${fracHTMLRaw(nr, d)}`;
+      const answer = mixedAns(Math.floor(total / d), total % d);
       return {
         display: `${w1} ${fracHTMLRaw(n1, d)} + ${w2} ${fracHTMLRaw(n2, d)} = %%BLANK%%`,
         answer,
@@ -441,8 +443,7 @@ export const GENERATORS: Record<string, Generator> = {
       const [bw, bn] = imp1 >= imp2 ? [w1, n1] : [w2, n2];
       const [sw, sn] = imp1 >= imp2 ? [w2, n2] : [w1, n1];
       const diff = big - small;
-      const wr = Math.floor(diff / d), nr = diff % d;
-      const answer = nr === 0 ? String(wr) : wr === 0 ? fracHTMLRaw(nr, d) : `${wr} ${fracHTMLRaw(nr, d)}`;
+      const answer = mixedAns(Math.floor(diff / d), diff % d);
       return {
         display: `${bw} ${fracHTMLRaw(bn, d)} − ${sw} ${fracHTMLRaw(sn, d)} = %%BLANK%%`,
         answer,
@@ -535,6 +536,9 @@ export const GENERATORS: Record<string, Generator> = {
     const op = ops[rng.int(0, 3)];
     let an = rng.int(1, 5), ad = rng.int(2, 6);
     let bn = rng.int(1, 5), bd = rng.int(2, 6);
+    // reduce operand fractions so the problem doesn't show e.g. (2/4)
+    const ga = gcd(an, ad); an /= ga; ad /= ga;
+    const gb = gcd(bn, bd); bn /= gb; bd /= gb;
     const signA = rng.int(0, 1) ? 1 : -1;
     const signB = rng.int(0, 1) ? 1 : -1;
     an *= signA; bn *= signB;
@@ -908,12 +912,15 @@ export const GENERATORS: Record<string, Generator> = {
     const cCoef = r1 * r2;
     const bStr = bCoef > 0 ? ` + ${bCoef}x` : bCoef < 0 ? ` − ${Math.abs(bCoef)}x` : '';
     const cStr = cCoef > 0 ? ` + ${cCoef}` : cCoef < 0 ? ` − ${Math.abs(cCoef)}` : '';
-    const answer = r1 === r2
-      ? fmtN(r1)
-      : `${fmtN(r1)} 또는 ${fmtN(r2)}`;
+    if (r1 === r2) {
+      return {
+        display: `x²${bStr}${cStr} = 0,&nbsp; x = %%BLANK%%`,
+        answer: fmtN(r1),
+      };
+    }
     return {
-      display: `x²${bStr}${cStr} = 0,&nbsp; x = %%BLANK%%`,
-      answer,
+      display: `x²${bStr}${cStr} = 0,&nbsp; x = %%BLANK%% 또는 x = %%BLANK%%`,
+      answer: `${fmtN(r1)}, ${fmtN(r2)}`,
     };
   },
 };

@@ -417,8 +417,22 @@ describe('M3 — 중학교 3학년', () => {
     for (const seed of SEEDS) {
       const rng = new SeededRandom(seed);
       const p = GENERATORS['M3-04'](rng);
-      // display "x² = 0" means b=0, c=0 → both roots 0
-      expect(p.display.trim()).not.toBe('x² = 0');
+      // both roots zero → x²= 0, prevented by do-while guard
+      expect(p.display).not.toContain('x² = 0,');
+    }
+  });
+
+  it('M3-04: two distinct roots use two blanks; double root uses one blank', () => {
+    for (const seed of SEEDS) {
+      const rng = new SeededRandom(seed);
+      const p = GENERATORS['M3-04'](rng);
+      const blanks = (p.display.match(/%%BLANK%%/g) || []).length;
+      if (blanks === 2) {
+        // answer must be "r1, r2"
+        expect(p.answer.split(', ')).toHaveLength(2);
+      } else {
+        expect(blanks).toBe(1);
+      }
     }
   });
 
