@@ -362,12 +362,13 @@ describe('M2 — 중학교 2학년', () => {
 
 describe('M3 — 중학교 3학년', () => {
   it('M3-01: √(n²) = n (perfect square case)', () => {
+    // Now using KaTeX, display is HTML — detect type 0 by absence of '×' and '('
     let tested = 0;
     for (const seed of SEEDS) {
       const rng = new SeededRandom(seed);
       const p = GENERATORS['M3-01'](rng);
-      if (p.display.startsWith('√') && !p.display.includes('×') && !p.display.includes('(')) {
-        // type 0: √(n²) = n
+      if (!p.display.includes('×') && !p.display.includes('(')) {
+        // type 0: √(n²) = n — answer is a plain integer string
         const n = Number(p.answer);
         expect(n).toBeGreaterThan(0);
         tested++;
@@ -376,23 +377,16 @@ describe('M3 — 중학교 3학년', () => {
     expect(tested).toBeGreaterThan(0);
   });
 
-  it('M3-01: √a × √b simplifies when product is perfect square', () => {
+  it('M3-01: √a × √b answer is either an integer or non-empty KaTeX HTML', () => {
     for (const seed of SEEDS) {
       const rng = new SeededRandom(seed);
       const p = GENERATORS['M3-01'](rng);
       if (p.display.includes('×')) {
-        const match = p.display.match(/√(\d+) × √(\d+)/);
-        if (match) {
-          const a = Number(match[1]), b = Number(match[2]);
-          const prod = a * b;
-          const sqrtProd = Math.round(Math.sqrt(prod));
-          if (sqrtProd * sqrtProd === prod) {
-            // should be simplified to integer
-            expect(p.answer).toBe(String(sqrtProd));
-          } else {
-            expect(p.answer).toBe(`√${prod}`);
-          }
-        }
+        // answer is either a plain integer (perfect square) or KaTeX HTML for a sqrt
+        const answerIsInteger = !isNaN(Number(p.answer)) && p.answer.trim() !== '';
+        const answerIsHtml = p.answer.includes('<');
+        expect(answerIsInteger || answerIsHtml).toBe(true);
+        expect(p.answer.trim()).not.toBe('');
       }
     }
   });

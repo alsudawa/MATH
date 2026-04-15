@@ -1,4 +1,9 @@
-import { SeededRandom, gcd, lcm, fracHTML, fracHTMLRaw, fracHTMLParenRaw } from './utils';
+import katex from 'katex';
+import { SeededRandom, gcd, lcm, fracHTML, fracHTMLRaw, fracHTMLParenRaw, kSqrt } from './utils';
+
+function K(latex: string): string {
+  return katex.renderToString(latex, { throwOnError: false, output: 'html' });
+}
 
 // ==================== TYPES ====================
 
@@ -35,12 +40,6 @@ function signXStr(n: number): string {
   if (n > 0) return `+ ${n}x`;
   if (n < 0) return `− ${Math.abs(n)}x`;
   return '';
-}
-
-/** Render √n with proper vinculum. coef=1 suppressed. */
-function sqrtHTML(n: number, coef = 1): string {
-  const c = coef === 1 ? '' : String(coef);
-  return `${c}√<span class="rad">${n}</span>`;
 }
 
 function nonZeroInt(rng: SeededRandom, min: number, max: number): number {
@@ -693,7 +692,7 @@ export const GENERATORS: Record<string, Generator> = {
     factors.forEach(p => { factorMap[p] = (factorMap[p] ?? 0) + 1; });
     const answerStr = Object.entries(factorMap)
       .sort(([a], [b]) => Number(a) - Number(b))
-      .map(([p, e]) => e > 1 ? `${p}<sup>${e}</sup>` : p)
+      .map(([p, e]) => e > 1 ? K(`${p}^{${e}}`) : p)
       .join(' × ');
     return { display: `${n}을 소인수분해하면 %%BLANK%%`, answer: answerStr };
   },
@@ -1019,31 +1018,31 @@ export const GENERATORS: Record<string, Generator> = {
     const type = rng.int(0, 2);
     if (type === 0) {
       const m = rng.int(1, 5), n = rng.int(1, 5);
-      return { display: `a<sup>${m}</sup> × a<sup>${n}</sup> = %%BLANK%%`, answer: `a<sup>${m + n}</sup>` };
+      return { display: `${K(`a^{${m}} \\times a^{${n}}`)} = %%BLANK%%`, answer: K(`a^{${m + n}}`) };
     } else if (type === 1) {
       const m = rng.int(3, 8), n = rng.int(1, m - 1);
-      return { display: `a<sup>${m}</sup> ÷ a<sup>${n}</sup> = %%BLANK%%`, answer: `a<sup>${m - n}</sup>` };
+      return { display: `${K(`a^{${m}} \\div a^{${n}}`)} = %%BLANK%%`, answer: K(`a^{${m - n}}`) };
     } else {
       const m = rng.int(1, 4), n = rng.int(2, 4);
-      return { display: `(a<sup>${m}</sup>)<sup>${n}</sup> = %%BLANK%%`, answer: `a<sup>${m * n}</sup>` };
+      return { display: `${K(`(a^{${m}})^{${n}}`)} = %%BLANK%%`, answer: K(`a^{${m * n}}`) };
     }
   },
 
   'M2-03': (rng) => {
     // 단항식·다항식 계산
     const a = rng.int(1, 5), b = rng.int(1, 5);
-    const xCoef = (c: number, exp: number) => `${c === 1 ? '' : c}x<sup>${exp}</sup>`;
+    const xCoef = (c: number, exp: number) => K(`${c === 1 ? '' : c}x^{${exp}}`);
     if (rng.int(0, 1) === 0) {
       const m = rng.int(1, 3), n = rng.int(1, 3);
       return {
-        display: `${a}x<sup>${m}</sup> × ${b}x<sup>${n}</sup> = %%BLANK%%`,
+        display: `${K(`${a}x^{${m}} \\times ${b}x^{${n}}`)} = %%BLANK%%`,
         answer: xCoef(a * b, m + n),
       };
     } else {
       const m = rng.int(2, 4), n = rng.int(1, m - 1);
       const coef = a * b;
       return {
-        display: `${coef}x<sup>${m}</sup> ÷ ${b}x<sup>${n}</sup> = %%BLANK%%`,
+        display: `${K(`${coef}x^{${m}} \\div ${b}x^{${n}}`)} = %%BLANK%%`,
         answer: xCoef(a, m - n),
       };
     }
@@ -1182,19 +1181,19 @@ export const GENERATORS: Record<string, Generator> = {
     const type = rng.int(0, 2);
     if (type === 0) {
       const n = rng.int(2, 12);
-      return { display: `${sqrtHTML(n * n)} = %%BLANK%%`, answer: String(n) };
+      return { display: `${kSqrt(n * n)} = %%BLANK%%`, answer: String(n) };
     } else if (type === 1) {
       const a = rng.int(2, 7), b = rng.int(2, 7);
       const prod = a * b;
       const sqrtProd = Math.round(Math.sqrt(prod));
       const isPerfectSq = sqrtProd * sqrtProd === prod;
       return {
-        display: `${sqrtHTML(a)} × ${sqrtHTML(b)} = %%BLANK%%`,
-        answer: isPerfectSq ? String(sqrtProd) : sqrtHTML(prod),
+        display: `${kSqrt(a)} × ${kSqrt(b)} = %%BLANK%%`,
+        answer: isPerfectSq ? String(sqrtProd) : kSqrt(prod),
       };
     } else {
       const a = rng.int(2, 15);
-      return { display: `(${sqrtHTML(a)})² = %%BLANK%%`, answer: String(a) };
+      return { display: `(${kSqrt(a)})² = %%BLANK%%`, answer: String(a) };
     }
   },
 
@@ -1289,8 +1288,8 @@ export const GENERATORS: Record<string, Generator> = {
       const a = rng.int(1, 5), b = rng.int(1, 5);
       const sum = a + b;
       return {
-        display: `${sqrtHTML(m, a)} + ${sqrtHTML(m, b)} = %%BLANK%%`,
-        answer: sqrtHTML(m, sum),
+        display: `${kSqrt(m, a)} + ${kSqrt(m, b)} = %%BLANK%%`,
+        answer: kSqrt(m, sum),
       };
     } else if (type === 1) {
       // a√m × b√n
@@ -1300,9 +1299,9 @@ export const GENERATORS: Record<string, Generator> = {
       const sqrtProd = Math.round(Math.sqrt(prod));
       const isPerfSq = sqrtProd * sqrtProd === prod;
       const ansCoef = a * b;
-      const ans = isPerfSq ? String(ansCoef * sqrtProd) : sqrtHTML(prod, ansCoef);
+      const ans = isPerfSq ? String(ansCoef * sqrtProd) : kSqrt(prod, ansCoef);
       return {
-        display: `${sqrtHTML(m, a)} × ${sqrtHTML(n, b)} = %%BLANK%%`,
+        display: `${kSqrt(m, a)} × ${kSqrt(n, b)} = %%BLANK%%`,
         answer: ans,
       };
     } else {
@@ -1311,8 +1310,8 @@ export const GENERATORS: Record<string, Generator> = {
       const b = rng.int(1, 4), a = rng.int(b + 1, b + 5);
       const diff = a - b;
       return {
-        display: `${sqrtHTML(m, a)} − ${sqrtHTML(m, b)} = %%BLANK%%`,
-        answer: sqrtHTML(m, diff),
+        display: `${kSqrt(m, a)} − ${kSqrt(m, b)} = %%BLANK%%`,
+        answer: kSqrt(m, diff),
       };
     }
   },

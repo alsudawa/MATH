@@ -53,40 +53,42 @@ export function lcm(a: number, b: number): number {
 
 // ==================== FRACTION HTML ====================
 
-function makeFrac(absN: number, d: number): string {
-  return `<span class="frac"><span class="frac-num">${absN}</span><span class="frac-den">${d}</span></span>`;
+import katex from 'katex';
+
+function K(latex: string): string {
+  return katex.renderToString(latex, { throwOnError: false, output: 'html' });
 }
 
-/** 분수 HTML (GCD 약분 적용, answer용) */
+/** 분수 HTML — GCD 약분 적용 (answer용) */
 export function fracHTML(n: number, d: number): string {
   const g = gcd(Math.abs(n), Math.abs(d));
-  n = n / g;
-  d = d / g;
+  n /= g; d /= g;
   if (d < 0) { n = -n; d = -d; }
   if (d === 1) return n < 0 ? `−${Math.abs(n)}` : String(n);
-  const frac = makeFrac(Math.abs(n), d);
-  return n < 0
-    ? `<span class="neg-frac">−${frac}</span>`
-    : frac;
+  const latex = n < 0 ? `-\\dfrac{${Math.abs(n)}}{${d}}` : `\\dfrac{${n}}{${d}}`;
+  return K(latex);
 }
 
-/** 분수 HTML (약분 없음, display용) */
+/** 분수 HTML — 약분 없음 (display용) */
 export function fracHTMLRaw(n: number, d: number): string {
   if (d === 1) return n < 0 ? `−${Math.abs(n)}` : String(n);
-  const frac = makeFrac(Math.abs(n), d);
-  return n < 0
-    ? `<span class="neg-frac">−${frac}</span>`
-    : frac;
+  const latex = n < 0 ? `-\\dfrac{${Math.abs(n)}}{${d}}` : `\\dfrac{${n}}{${d}}`;
+  return K(latex);
 }
 
-/** 음수 분수에 괄호를 붙일 때 수직 정렬 포함: (−n/d)
- *  예) M1-03에서 (−3/5) 표기가 필요한 경우 */
+/** 음수 분수에 괄호 붙이기 (display용) */
 export function fracHTMLParenRaw(n: number, d: number): string {
   if (d === 1) return n < 0 ? `(−${Math.abs(n)})` : String(n);
-  const frac = makeFrac(Math.abs(n), d);
-  return n < 0
-    ? `<span class="neg-frac">(−${frac})</span>`
-    : frac;
+  const latex = n < 0
+    ? `\\left(-\\dfrac{${Math.abs(n)}}{${d}}\\right)`
+    : `\\dfrac{${n}}{${d}}`;
+  return K(latex);
+}
+
+/** 근호 (vinculum 포함), coef=1은 표시 안 함 */
+export function kSqrt(n: number, coef = 1): string {
+  const prefix = coef === 1 ? '' : String(coef);
+  return K(`${prefix}\\sqrt{${n}}`);
 }
 
 // ==================== BLANK RENDER ====================
