@@ -38,6 +38,8 @@ export const GRADE_DATA: GradeGroup[] = [
       { id: '09', name: '곱셈 기초 (1단·2단·5단)', perPage: 20 },
       { id: '10', name: '덧셈과 뺄셈의 관계 (역연산)', perPage: 20 },
       { id: '11', name: '곱셈 기초 (3단·4단)', perPage: 20 },
+      { id: '12', name: '10의 보수 만들기', perPage: 20 },
+      { id: '13', name: '곱셈 기초 (6단·7단)', perPage: 20 },
     ],
   },
   {
@@ -57,6 +59,8 @@ export const GRADE_DATA: GradeGroup[] = [
       { id: '12', name: '네 자리 수 나눗셈', perPage: 12 },
       { id: '13', name: '분수 덧셈/뺄셈 (다른 분모)', perPage: 16 },
       { id: '14', name: '소수 덧셈/뺄셈 (소수 둘째 자리)', perPage: 16 },
+      { id: '15', name: '네 자리 수 덧셈/뺄셈', perPage: 16 },
+      { id: '16', name: '혼합 계산 (연산 순서)', perPage: 16 },
     ],
   },
   {
@@ -73,6 +77,11 @@ export const GRADE_DATA: GradeGroup[] = [
       { id: '09', name: '대분수의 덧셈과 뺄셈', perPage: 12 },
       { id: '10', name: '소수의 곱셈 (둘째 자리)', perPage: 16 },
       { id: '11', name: '소수의 나눗셈 (소수 몫)', perPage: 16 },
+      { id: '12', name: '분수·소수 변환', perPage: 12 },
+      { id: '13', name: '비와 비율', perPage: 12 },
+      { id: '14', name: '백분율', perPage: 12 },
+      { id: '15', name: '사칙 혼합 계산', perPage: 12 },
+      { id: '16', name: '대분수의 곱셈과 나눗셈', perPage: 12 },
     ],
   },
   {
@@ -86,6 +95,10 @@ export const GRADE_DATA: GradeGroup[] = [
       { id: '06', name: '정수의 혼합계산 (괄호 포함)', perPage: 12 },
       { id: '07', name: '부호가 있는 식의 계산', perPage: 12 },
       { id: '08', name: '일차식의 덧셈과 뺄셈', perPage: 12 },
+      { id: '09', name: '절댓값 계산', perPage: 16 },
+      { id: '10', name: '유리수 혼합 계산', perPage: 10 },
+      { id: '11', name: '문자식 대입', perPage: 12 },
+      { id: '12', name: '비와 비례식', perPage: 12 },
     ],
   },
   {
@@ -97,6 +110,9 @@ export const GRADE_DATA: GradeGroup[] = [
       { id: '04', name: '일차부등식 풀기', perPage: 10 },
       { id: '05', name: '연립일차방정식 풀기', perPage: 8 },
       { id: '06', name: '단항식의 곱셈/나눗셈 (이변수)', perPage: 12 },
+      { id: '07', name: '다항식 곱셈 (분배법칙)', perPage: 10 },
+      { id: '08', name: '다항식 나눗셈', perPage: 10 },
+      { id: '09', name: '연립부등식', perPage: 8 },
     ],
   },
   {
@@ -106,6 +122,11 @@ export const GRADE_DATA: GradeGroup[] = [
       { id: '02', name: '다항식 곱셈 (곱셈공식)', perPage: 8 },
       { id: '03', name: '인수분해', perPage: 8 },
       { id: '04', name: '이차방정식 풀기', perPage: 8 },
+      { id: '05', name: '제곱근 사칙 혼합', perPage: 10 },
+      { id: '06', name: '곱셈공식 역방향 (대칭식)', perPage: 8 },
+      { id: '07', name: '근의 공식', perPage: 8 },
+      { id: '08', name: '근과 계수의 관계', perPage: 10 },
+      { id: '09', name: '완전제곱식 변형', perPage: 8 },
     ],
   },
 ];

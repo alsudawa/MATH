@@ -156,6 +156,23 @@ export const GENERATORS: Record<string, Generator> = {
     return { display: `${table} × ${n} = %%BLANK%%`, answer: String(table * n) };
   },
 
+  'E1-12': (rng) => {
+    // 10의 보수 (10 만들기)
+    const a = rng.int(1, 9);
+    if (rng.int(0, 1) === 0) {
+      return { display: `%%BLANK%% + ${a} = 10`, answer: String(10 - a) };
+    } else {
+      return { display: `${a} + %%BLANK%% = 10`, answer: String(10 - a) };
+    }
+  },
+
+  'E1-13': (rng) => {
+    // 곱셈 기초 (6단·7단)
+    const table = rng.int(0, 1) === 0 ? 6 : 7;
+    const n = rng.int(1, 9);
+    return { display: `${table} × ${n} = %%BLANK%%`, answer: String(table * n) };
+  },
+
   // ===== E2 (초등 3~4학년) =====
 
   'E2-01': (rng) => {
@@ -306,6 +323,36 @@ export const GENERATORS: Record<string, Generator> = {
         display: `${big.toFixed(2)} − ${small.toFixed(2)} = %%BLANK%%`,
         answer: result.toFixed(2),
       };
+    }
+  },
+
+  'E2-15': (rng) => {
+    // 네 자리 수 덧셈/뺄셈
+    if (rng.int(0, 1) === 0) {
+      const a = rng.int(1000, 8999), b = rng.int(1000, 9999 - a);
+      return { display: `${a} + ${b} = %%BLANK%%`, answer: String(a + b) };
+    } else {
+      const a = rng.int(2000, 9999), b = rng.int(1000, a - 1000);
+      return { display: `${a} − ${b} = %%BLANK%%`, answer: String(a - b) };
+    }
+  },
+
+  'E2-16': (rng) => {
+    // 혼합 계산 (연산 순서: 곱셈·나눗셈 우선)
+    const type = rng.int(0, 2);
+    if (type === 0) {
+      // a + b × c
+      const a = rng.int(1, 30), b = rng.int(2, 9), c = rng.int(2, 9);
+      return { display: `${a} + ${b} × ${c} = %%BLANK%%`, answer: String(a + b * c) };
+    } else if (type === 1) {
+      // a × b − c
+      const a = rng.int(2, 9), b = rng.int(2, 9);
+      const c = rng.int(1, a * b - 1);
+      return { display: `${a} × ${b} − ${c} = %%BLANK%%`, answer: String(a * b - c) };
+    } else {
+      // a ÷ b + c (a는 b의 배수)
+      const b = rng.int(2, 9), q = rng.int(2, 9), c = rng.int(1, 20);
+      return { display: `${b * q} ÷ ${b} + ${c} = %%BLANK%%`, answer: String(q + c) };
     }
   },
 
@@ -486,6 +533,144 @@ export const GENERATORS: Record<string, Generator> = {
       display: `${a.toFixed(1)} ÷ ${b} = %%BLANK%%`,
       answer: q.toFixed(1),
     };
+  },
+
+  'E3-12': (rng) => {
+    // 분수·소수 변환
+    if (rng.int(0, 1) === 0) {
+      // 분수→소수: 분모가 2, 4, 5, 10, 20, 25, 100인 유한소수
+      const options: [number, number][] = [[1,2],[1,4],[3,4],[1,5],[2,5],[3,5],[4,5],[1,10],[3,10],[7,10],[1,20],[1,25],[1,100]];
+      const [n, d] = options[rng.int(0, options.length - 1)];
+      return {
+        display: `${fracHTMLRaw(n, d)} = %%BLANK%%`,
+        answer: (n / d).toFixed(String(n / d).split('.')[1]?.length ?? 1),
+      };
+    } else {
+      // 소수→분수: 유한소수를 기약분수로
+      const opts: [string, number, number][] = [
+        ['0.5',1,2],['0.25',1,4],['0.75',3,4],['0.2',1,5],['0.4',2,5],
+        ['0.6',3,5],['0.8',4,5],['0.1',1,10],['0.3',3,10],['0.7',7,10],
+        ['0.05',1,20],['0.04',1,25],['0.01',1,100],
+      ];
+      const [dec, n, d] = opts[rng.int(0, opts.length - 1)];
+      return {
+        display: `${dec} = %%BLANK%%`,
+        answer: fracHTML(n, d),
+      };
+    }
+  },
+
+  'E3-13': (rng) => {
+    // 비와 비율: a:b = c:? or a:b = ?:c
+    const a = rng.int(1, 9);
+    const b = rng.int(1, 9);
+    const k = rng.int(2, 5);
+    if (rng.int(0, 1) === 0) {
+      return {
+        display: `${a}:${b} = ${a * k}:%%BLANK%%`,
+        answer: String(b * k),
+      };
+    } else {
+      return {
+        display: `${a}:${b} = %%BLANK%%:${b * k}`,
+        answer: String(a * k),
+      };
+    }
+  },
+
+  'E3-14': (rng) => {
+    // 백분율
+    const type = rng.int(0, 2);
+    if (type === 0) {
+      // n%는 얼마?
+      const pct = rng.int(1, 9) * 10;
+      const whole = rng.int(1, 9) * 100;
+      return {
+        display: `${whole}의 ${pct}% = %%BLANK%%`,
+        answer: String(whole * pct / 100),
+      };
+    } else if (type === 1) {
+      // part/whole × 100 = ?%
+      const whole = [20, 25, 40, 50, 80, 100, 200][rng.int(0, 6)];
+      const part = rng.int(1, whole - 1);
+      const g = gcd(part, whole);
+      const pct = (part / whole) * 100;
+      if (Number.isInteger(pct)) {
+        return {
+          display: `${whole}명 중 ${part}명은 몇 %? %%BLANK%%`,
+          answer: `${pct}%`,
+        };
+      }
+      // fallback to clean case
+      const w2 = 100, p2 = rng.int(1, 9) * 10;
+      return {
+        display: `${w2}명 중 ${p2}명은 몇 %? %%BLANK%%`,
+        answer: `${p2}%`,
+      };
+    } else {
+      // ?%가 주어진 값: whole의 p%가 v이면 whole=?
+      const p = rng.int(1, 9) * 10;
+      const whole = rng.int(1, 9) * 100;
+      const v = whole * p / 100;
+      return {
+        display: `어떤 수의 ${p}%가 ${v}일 때, 그 수는 %%BLANK%%`,
+        answer: String(whole),
+      };
+    }
+  },
+
+  'E3-15': (rng) => {
+    // 사칙 혼합 계산 (나눗셈→곱셈→덧뺄셈 순서)
+    const type = rng.int(0, 2);
+    if (type === 0) {
+      // a ÷ b + c × d
+      const b = rng.int(2, 9), q = rng.int(2, 9);
+      const c = rng.int(2, 9), d = rng.int(2, 9);
+      return {
+        display: `${b * q} ÷ ${b} + ${c} × ${d} = %%BLANK%%`,
+        answer: String(q + c * d),
+      };
+    } else if (type === 1) {
+      // a × b − c ÷ d (c는 d의 배수)
+      const a = rng.int(2, 9), b = rng.int(2, 9);
+      const d = rng.int(2, 6), r = rng.int(1, 9);
+      return {
+        display: `${a} × ${b} − ${d * r} ÷ ${d} = %%BLANK%%`,
+        answer: String(a * b - r),
+      };
+    } else {
+      // (a + b) × c − d ÷ e
+      const a = rng.int(1, 9), b = rng.int(1, 9);
+      const c = rng.int(2, 5);
+      const e = rng.int(2, 5), f = rng.int(1, 6);
+      return {
+        display: `(${a} + ${b}) × ${c} − ${e * f} ÷ ${e} = %%BLANK%%`,
+        answer: String((a + b) * c - f),
+      };
+    }
+  },
+
+  'E3-16': (rng) => {
+    // 대분수의 곱셈과 나눗셈
+    const w1 = rng.int(1, 3), n1 = rng.int(1, 3), d1 = rng.int(n1 + 1, n1 + 4);
+    const w2 = rng.int(1, 3), n2 = rng.int(1, 3), d2 = rng.int(n2 + 1, n2 + 4);
+    const imp1 = w1 * d1 + n1; // improper numerator for first fraction
+    const imp2 = w2 * d2 + n2;
+    if (rng.int(0, 1) === 0) {
+      // multiplication
+      const rn = imp1 * imp2, rd = d1 * d2;
+      return {
+        display: `${w1} ${fracHTMLRaw(n1, d1)} × ${w2} ${fracHTMLRaw(n2, d2)} = %%BLANK%%`,
+        answer: fracHTML(rn, rd),
+      };
+    } else {
+      // division: imp1/d1 ÷ imp2/d2 = imp1*d2 / (d1*imp2)
+      const rn = imp1 * d2, rd = d1 * imp2;
+      return {
+        display: `${w1} ${fracHTMLRaw(n1, d1)} ÷ ${w2} ${fracHTMLRaw(n2, d2)} = %%BLANK%%`,
+        answer: fracHTML(rn, rd),
+      };
+    }
   },
 
   // ===== M1 (중학교 1학년) =====
@@ -680,6 +865,121 @@ export const GENERATORS: Record<string, Generator> = {
     };
   },
 
+  'M1-09': (rng) => {
+    // 절댓값 계산
+    const type = rng.int(0, 2);
+    const a = rng.int(1, 12), b = rng.int(1, 12);
+    const fmtAbs = (n: number) => `|${fmtN(-n)}|`;
+    if (type === 0) {
+      // |−a| + |−b|
+      return {
+        display: `${fmtAbs(a)} + ${fmtAbs(b)} = %%BLANK%%`,
+        answer: String(a + b),
+      };
+    } else if (type === 1) {
+      // |−a| − |−b| (ensure a > b)
+      const big = Math.max(a, b), small = Math.min(a, b);
+      return {
+        display: `${fmtAbs(big)} − ${fmtAbs(small)} = %%BLANK%%`,
+        answer: String(big - small),
+      };
+    } else {
+      // |a − b| form
+      const x = rng.int(-8, 8), y = rng.int(-8, 8);
+      const inner = x - y;
+      const innerStr = inner < 0 ? fmtN(inner) : String(inner);
+      return {
+        display: `|${fmtN(x)} − (${fmtN(y)})| = %%BLANK%%`,
+        answer: String(Math.abs(inner)),
+      };
+    }
+  },
+
+  'M1-10': (rng) => {
+    // 유리수 혼합 계산: 분수·음수 포함 두 단계 계산
+    // pattern: (a/b) × c + (d/e)  or  (a/b) + (c/d) × e
+    const an = nonZeroInt(rng, -4, 4), ad = rng.int(2, 5);
+    const bn = nonZeroInt(rng, -4, 4), bd = rng.int(2, 5);
+    const k = nonZeroInt(rng, -4, 4);
+    const ga = gcd(Math.abs(an), ad); const san = an / ga, sad = ad / ga;
+    const gb = gcd(Math.abs(bn), bd); const sbn = bn / gb, sbd = bd / gb;
+
+    if (rng.int(0, 1) === 0) {
+      // (an/ad) × k + (bn/bd)
+      const prod_n = san * k, prod_d = sad;
+      const sum_n = prod_n * sbd + sbn * prod_d;
+      const sum_d = prod_d * sbd;
+      return {
+        display: `${fracHTMLParenRaw(san, sad)} × ${fmtN(k)} + ${fracHTMLParenRaw(sbn, sbd)} = %%BLANK%%`,
+        answer: fracHTML(sum_n, sum_d),
+      };
+    } else {
+      // (an/ad) ÷ (bn/bd) − k: = (an*bd)/(ad*bn) − k
+      if (sbn === 0) {
+        return {
+          display: `${fracHTMLParenRaw(san, sad)} × ${fmtN(k)} + ${fracHTMLParenRaw(1, sbd)} = %%BLANK%%`,
+          answer: fracHTML(san * k * sbd + sad, sad * sbd),
+        };
+      }
+      const rn = san * sbd, rd = sad * sbn;
+      const final_n = rn - k * rd;
+      return {
+        display: `${fracHTMLParenRaw(san, sad)} ÷ ${fracHTMLParenRaw(sbn, sbd)} − ${fmtN(k)} = %%BLANK%%`,
+        answer: fracHTML(final_n, rd),
+      };
+    }
+  },
+
+  'M1-11': (rng) => {
+    // 문자식 대입: 주어진 x 값을 식에 대입
+    const x = nonZeroInt(rng, -5, 5);
+    const type = rng.int(0, 2);
+    if (type === 0) {
+      // ax + b
+      const a = nonZeroInt(rng, -5, 5), b = nonZeroInt(rng, -9, 9);
+      const result = a * x + b;
+      return {
+        display: `x = ${fmtN(x)}일 때,&nbsp; ${coefXStr(a)} ${signStr(b)} = %%BLANK%%`,
+        answer: fmtN(result),
+      };
+    } else if (type === 1) {
+      // x² + ax (a nonzero)
+      const a = nonZeroInt(rng, -5, 5);
+      const result = x * x + a * x;
+      return {
+        display: `x = ${fmtN(x)}일 때,&nbsp; x² ${signXStr(a)} = %%BLANK%%`,
+        answer: fmtN(result),
+      };
+    } else {
+      // ax² + b
+      const a = rng.int(1, 4), b = nonZeroInt(rng, -9, 9);
+      const result = a * x * x + b;
+      return {
+        display: `x = ${fmtN(x)}일 때,&nbsp; ${a}x² ${signStr(b)} = %%BLANK%%`,
+        answer: fmtN(result),
+      };
+    }
+  },
+
+  'M1-12': (rng) => {
+    // 비와 비례식: a:b = c:x 또는 a:b = x:c
+    const a = rng.int(1, 9), b = rng.int(1, 9);
+    const k = rng.int(2, 6);
+    if (rng.int(0, 1) === 0) {
+      // a:b = a*k : x  →  x = b*k
+      return {
+        display: `${a}:${b} = ${a * k}:x,&nbsp; x = %%BLANK%%`,
+        answer: String(b * k),
+      };
+    } else {
+      // a:b = x:b*k  →  x = a*k
+      return {
+        display: `${a}:${b} = x:${b * k},&nbsp; x = %%BLANK%%`,
+        answer: String(a * k),
+      };
+    }
+  },
+
   // ===== M2 (중학교 2학년) =====
 
   'M2-01': (rng) => {
@@ -819,6 +1119,59 @@ export const GENERATORS: Record<string, Generator> = {
     }
   },
 
+  'M2-07': (rng) => {
+    // 다항식 곱셈 (분배법칙): (ax + b)(cx + d) = Ax² + Bx + C
+    const a = rng.int(1, 4), b = nonZeroInt(rng, -6, 6);
+    const c = rng.int(1, 4), d = nonZeroInt(rng, -6, 6);
+    const A = a * c, B = a * d + b * c, C = b * d;
+    const bStr = B > 0 ? ` + ${B}x` : B < 0 ? ` − ${Math.abs(B)}x` : '';
+    const cStr = C > 0 ? ` + ${C}` : C < 0 ? ` − ${Math.abs(C)}` : '';
+    const bDisp = b > 0 ? ` + ${b}` : ` − ${Math.abs(b)}`;
+    const dDisp = d > 0 ? ` + ${d}` : ` − ${Math.abs(d)}`;
+    return {
+      display: `(${a}x${bDisp})(${c}x${dDisp}) = %%BLANK%%`,
+      answer: `${A}x²${bStr}${cStr}`,
+    };
+  },
+
+  'M2-08': (rng) => {
+    // 다항식 나눗셈: (axy + bx²y) ÷ cx = 단항식
+    // pattern: (Ax^m * y^n) ÷ (Bx^p) where m > p
+    const b = rng.int(1, 4), qc = rng.int(1, 4);
+    const a = b * qc; // coefficient divisible
+    const m = rng.int(2, 4), n = rng.int(1, 3);
+    const p = rng.int(1, m - 1);
+    const xyCoef = (c: number, xe: number, ye: number) => {
+      const xPart = xe === 0 ? '' : xe === 1 ? 'x' : `x<sup>${xe}</sup>`;
+      const yPart = ye === 0 ? '' : ye === 1 ? 'y' : `y<sup>${ye}</sup>`;
+      return `${c === 1 ? '' : c}${xPart}${yPart}`;
+    };
+    return {
+      display: `${xyCoef(a, m, n)} ÷ ${xyCoef(b, p, 0)} = %%BLANK%%`,
+      answer: xyCoef(qc, m - p, n),
+    };
+  },
+
+  'M2-09': (rng) => {
+    // 연립부등식: ax ops1 a*lo 이고 cx ops2 c*hi → 정수 경계 보장
+    const lo = rng.int(-5, 3);
+    const hi = rng.int(lo + 2, lo + 6);
+    const ops1 = rng.int(0, 1) === 0 ? '>' : '≥';
+    const ops2 = rng.int(0, 1) === 0 ? '<' : '≤';
+    const a = rng.int(1, 3), c = rng.int(1, 3);
+    const b = a * lo; // ax ops1 b → x ops1 lo
+    const d = c * hi; // cx ops2 d → x ops2 hi
+    const aStr = a === 1 ? 'x' : `${a}x`;
+    const cStr = c === 1 ? 'x' : `${c}x`;
+    // compound answer: lo < x < hi (with correct ≤ variants)
+    const loOp = ops1 === '>' ? '<' : '≤'; // flip for compound form
+    const ans = `${fmtN(lo)} ${loOp} x ${ops2} ${fmtN(hi)}`;
+    return {
+      display: `${aStr} ${ops1} ${fmtN(b)} 이고 ${cStr} ${ops2} ${fmtN(d)},&nbsp; %%BLANK%%`,
+      answer: ans,
+    };
+  },
+
   // ===== M3 (중학교 3학년) =====
 
   'M3-01': (rng) => {
@@ -923,6 +1276,126 @@ export const GENERATORS: Record<string, Generator> = {
       answer: `${fmtN(r1)}, ${fmtN(r2)}`,
     };
   },
+  'M3-05': (rng) => {
+    // 제곱근 사칙 혼합: a√m ± b√m (같은 근호 합치기) or a√m × b√n
+    const type = rng.int(0, 2);
+    if (type === 0) {
+      // (a√m + b√m) = (a+b)√m
+      const m = [2, 3, 5, 6, 7][rng.int(0, 4)];
+      const a = rng.int(1, 5), b = rng.int(1, 5);
+      const sum = a + b;
+      return {
+        display: `${a}√${m} + ${b}√${m} = %%BLANK%%`,
+        answer: `${sum}√${m}`,
+      };
+    } else if (type === 1) {
+      // a√m × b√n
+      const m = rng.int(2, 8), n = rng.int(2, 8);
+      const a = rng.int(1, 4), b = rng.int(1, 4);
+      const prod = m * n;
+      const sqrtProd = Math.round(Math.sqrt(prod));
+      const isPerfSq = sqrtProd * sqrtProd === prod;
+      const ansCoef = a * b;
+      const ans = isPerfSq ? String(ansCoef * sqrtProd) : `${ansCoef}√${prod}`;
+      return {
+        display: `${a}√${m} × ${b}√${n} = %%BLANK%%`,
+        answer: ans,
+      };
+    } else {
+      // a√m − b√m (a > b for positive result)
+      const m = [2, 3, 5, 6, 7][rng.int(0, 4)];
+      const b = rng.int(1, 4), a = rng.int(b + 1, b + 5);
+      const diff = a - b;
+      return {
+        display: `${a}√${m} − ${b}√${m} = %%BLANK%%`,
+        answer: `${diff}√${m}`,
+      };
+    }
+  },
+
+  'M3-06': (rng) => {
+    // 곱셈공식 역방향: 대칭식 계산 (x+y, xy 주어질 때 x²+y², (x−y)² 등)
+    const type = rng.int(0, 2);
+    const s = rng.int(2, 8); // x + y
+    const p = rng.int(1, Math.floor(s * s / 4)); // xy, ensure (x-y)² ≥ 0
+    if (type === 0) {
+      // x²+y² = (x+y)² − 2xy
+      const result = s * s - 2 * p;
+      return {
+        display: `x + y = ${s}, xy = ${p}일 때,&nbsp; x² + y² = %%BLANK%%`,
+        answer: fmtN(result),
+      };
+    } else if (type === 1) {
+      // (x−y)² = (x+y)² − 4xy
+      const result = s * s - 4 * p;
+      return {
+        display: `x + y = ${s}, xy = ${p}일 때,&nbsp; (x − y)² = %%BLANK%%`,
+        answer: fmtN(result),
+      };
+    } else {
+      // x³+y³ would be complex; use (x+y)³ = x³+y³+3xy(x+y) → x³+y³ = (x+y)³−3xy(x+y)
+      // simplify: just x²y + xy² = xy(x+y)
+      const result = p * s;
+      return {
+        display: `x + y = ${s}, xy = ${p}일 때,&nbsp; x²y + xy² = %%BLANK%%`,
+        answer: fmtN(result),
+      };
+    }
+  },
+
+  'M3-07': (rng) => {
+    // 근의 공식: ax² + bx + c = 0 (판별식 ≥ 0, 정수 또는 분수 근)
+    // 정수 근 보장: r1, r2 정수 → b = −(r1+r2)*a, c = r1*r2*a
+    const a = rng.int(1, 3);
+    let r1: number, r2: number;
+    do { r1 = nonZeroInt(rng, -6, 6); r2 = nonZeroInt(rng, -6, 6); } while (r1 === r2);
+    const b = -(r1 + r2) * a;
+    const c = r1 * r2 * a;
+    const bStr = b > 0 ? ` + ${b}x` : b < 0 ? ` − ${Math.abs(b)}x` : '';
+    const cStr = c > 0 ? ` + ${c}` : c < 0 ? ` − ${Math.abs(c)}` : '';
+    const aStr = a === 1 ? '' : String(a);
+    return {
+      display: `${aStr}x²${bStr}${cStr} = 0 (근의 공식 이용)&nbsp; x = %%BLANK%%`,
+      answer: `${fmtN(r1)}, ${fmtN(r2)}`,
+    };
+  },
+
+  'M3-08': (rng) => {
+    // 근과 계수의 관계: x² + px + q = 0의 두 근의 합 = −p, 곱 = q
+    const r1 = nonZeroInt(rng, -8, 8), r2 = nonZeroInt(rng, -8, 8);
+    const sumR = r1 + r2, prodR = r1 * r2;
+    const bCoef = -sumR, cCoef = prodR;
+    const bStr = bCoef > 0 ? ` + ${bCoef}x` : bCoef < 0 ? ` − ${Math.abs(bCoef)}x` : '';
+    const cStr = cCoef > 0 ? ` + ${cCoef}` : cCoef < 0 ? ` − ${Math.abs(cCoef)}` : '';
+    const type = rng.int(0, 1);
+    if (type === 0) {
+      return {
+        display: `x²${bStr}${cStr} = 0의 두 근의 합 = %%BLANK%%`,
+        answer: fmtN(sumR),
+      };
+    } else {
+      return {
+        display: `x²${bStr}${cStr} = 0의 두 근의 곱 = %%BLANK%%`,
+        answer: fmtN(prodR),
+      };
+    }
+  },
+
+  'M3-09': (rng) => {
+    // 완전제곱식 변형: x² + bx + c → (x + p)² + q
+    const p = nonZeroInt(rng, -6, 6); // (x+p)²
+    const q = nonZeroInt(rng, -9, 9); // constant shift
+    const b = 2 * p, c = p * p + q;
+    const bStr = b > 0 ? ` + ${b}x` : ` − ${Math.abs(b)}x`;
+    const cStr = c > 0 ? ` + ${c}` : c < 0 ? ` − ${Math.abs(c)}` : '';
+    const pStr = p > 0 ? ` + ${p}` : ` − ${Math.abs(p)}`;
+    const qStr = q > 0 ? ` + ${q}` : q < 0 ? ` − ${Math.abs(q)}` : '';
+    return {
+      display: `x²${bStr}${cStr}을 완전제곱식으로&nbsp; (x${pStr})²${qStr} = %%BLANK%%`,
+      answer: `(x${pStr})²${qStr}`,
+    };
+  },
+
 };
 
 // ==================== GENERATE SHEET ====================
