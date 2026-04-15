@@ -37,6 +37,12 @@ function signXStr(n: number): string {
   return '';
 }
 
+/** Render √n with proper vinculum. coef=1 suppressed. */
+function sqrtHTML(n: number, coef = 1): string {
+  const c = coef === 1 ? '' : String(coef);
+  return `${c}√<span class="rad">${n}</span>`;
+}
+
 function nonZeroInt(rng: SeededRandom, min: number, max: number): number {
   let v: number;
   do { v = rng.int(min, max); } while (v === 0);
@@ -1176,19 +1182,19 @@ export const GENERATORS: Record<string, Generator> = {
     const type = rng.int(0, 2);
     if (type === 0) {
       const n = rng.int(2, 12);
-      return { display: `√${n * n} = %%BLANK%%`, answer: String(n) };
+      return { display: `${sqrtHTML(n * n)} = %%BLANK%%`, answer: String(n) };
     } else if (type === 1) {
       const a = rng.int(2, 7), b = rng.int(2, 7);
       const prod = a * b;
       const sqrtProd = Math.round(Math.sqrt(prod));
       const isPerfectSq = sqrtProd * sqrtProd === prod;
       return {
-        display: `√${a} × √${b} = %%BLANK%%`,
-        answer: isPerfectSq ? String(sqrtProd) : `√${prod}`,
+        display: `${sqrtHTML(a)} × ${sqrtHTML(b)} = %%BLANK%%`,
+        answer: isPerfectSq ? String(sqrtProd) : sqrtHTML(prod),
       };
     } else {
       const a = rng.int(2, 15);
-      return { display: `(√${a})² = %%BLANK%%`, answer: String(a) };
+      return { display: `(${sqrtHTML(a)})² = %%BLANK%%`, answer: String(a) };
     }
   },
 
@@ -1283,8 +1289,8 @@ export const GENERATORS: Record<string, Generator> = {
       const a = rng.int(1, 5), b = rng.int(1, 5);
       const sum = a + b;
       return {
-        display: `${a}√${m} + ${b}√${m} = %%BLANK%%`,
-        answer: `${sum}√${m}`,
+        display: `${sqrtHTML(m, a)} + ${sqrtHTML(m, b)} = %%BLANK%%`,
+        answer: sqrtHTML(m, sum),
       };
     } else if (type === 1) {
       // a√m × b√n
@@ -1294,9 +1300,9 @@ export const GENERATORS: Record<string, Generator> = {
       const sqrtProd = Math.round(Math.sqrt(prod));
       const isPerfSq = sqrtProd * sqrtProd === prod;
       const ansCoef = a * b;
-      const ans = isPerfSq ? String(ansCoef * sqrtProd) : `${ansCoef}√${prod}`;
+      const ans = isPerfSq ? String(ansCoef * sqrtProd) : sqrtHTML(prod, ansCoef);
       return {
-        display: `${a}√${m} × ${b}√${n} = %%BLANK%%`,
+        display: `${sqrtHTML(m, a)} × ${sqrtHTML(n, b)} = %%BLANK%%`,
         answer: ans,
       };
     } else {
@@ -1305,8 +1311,8 @@ export const GENERATORS: Record<string, Generator> = {
       const b = rng.int(1, 4), a = rng.int(b + 1, b + 5);
       const diff = a - b;
       return {
-        display: `${a}√${m} − ${b}√${m} = %%BLANK%%`,
-        answer: `${diff}√${m}`,
+        display: `${sqrtHTML(m, a)} − ${sqrtHTML(m, b)} = %%BLANK%%`,
+        answer: sqrtHTML(m, diff),
       };
     }
   },

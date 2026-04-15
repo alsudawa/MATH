@@ -6,6 +6,14 @@
 
 * { font-family: 'Noto Sans KR', sans-serif; }
 
+/* 근호 (vinculum) */
+.rad {
+  display: inline-block;
+  border-top: 1.5px solid currentColor;
+  padding: 0 2px 0 1px;
+  margin-left: -1px;
+}
+
 /* 분수 */
 .frac {
   display: inline-flex;
