@@ -27,7 +27,7 @@ function countOccurrences(str: string, sub: string): number {
 /** Generate N seeds deterministically */
 function makeSeeds(n: number): string[] {
   const rng = new SeededRandom('TEST0');
-  return Array.from({ length: n }, (_, i) =>
+  return Array.from({ length: n }, (_) =>
     Math.floor(rng.next() * 60466176).toString(36).toUpperCase().padStart(5, '0')
   );
 }

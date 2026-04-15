@@ -593,7 +593,6 @@ export const GENERATORS: Record<string, Generator> = {
       // part/whole × 100 = ?%
       const whole = [20, 25, 40, 50, 80, 100, 200][rng.int(0, 6)];
       const part = rng.int(1, whole - 1);
-      const g = gcd(part, whole);
       const pct = (part / whole) * 100;
       if (Number.isInteger(pct)) {
         return {
@@ -887,7 +886,6 @@ export const GENERATORS: Record<string, Generator> = {
       // |a − b| form
       const x = rng.int(-8, 8), y = rng.int(-8, 8);
       const inner = x - y;
-      const innerStr = inner < 0 ? fmtN(inner) : String(inner);
       return {
         display: `|${fmtN(x)} − (${fmtN(y)})| = %%BLANK%%`,
         answer: String(Math.abs(inner)),
