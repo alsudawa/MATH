@@ -38,7 +38,7 @@ export default function PreviewSection({
   const gridCls = `grid gap-0 ${cols === 2 ? 'grid-cols-2' : cols === 3 ? 'grid-cols-3' : 'grid-cols-4'}`;
 
   return (
-    <section id="preview-section" className="flex flex-col gap-4">
+    <section className="flex flex-col gap-4">
       {/* 툴바 */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 px-5 py-3 flex items-center gap-3 flex-wrap">
         {/* 페이지 내비 */}

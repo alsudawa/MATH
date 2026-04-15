@@ -135,41 +135,49 @@ export default function App() {
     <div className="min-h-screen bg-slate-50">
       <Header gradeColor={grade.color} onWidNavigate={handleWidNavigate} />
 
-      <main className="max-w-5xl mx-auto px-4 py-10 flex flex-col gap-10">
+      <main className="max-w-7xl mx-auto px-4 py-10">
+        <div className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-8 lg:items-start">
 
-        <section className="flex flex-col gap-5">
-          <StepLabel num={1} text="학년을 선택하세요" color={grade.color} />
-          <GradeSelector selected={gradeCode} onSelect={handleSelectGrade} />
-        </section>
+          {/* 왼쪽: 컨트롤 영역 */}
+          <div className="flex flex-col gap-10">
+            <section className="flex flex-col gap-5">
+              <StepLabel num={1} text="학년을 선택하세요" color={grade.color} />
+              <GradeSelector selected={gradeCode} onSelect={handleSelectGrade} />
+            </section>
 
-        <section className="flex flex-col gap-5">
-          <StepLabel num={2} text="챕터를 선택하세요" color={grade.color} />
-          <ChapterSelector
-            chapters={grade.chapters}
-            selected={chapIdx}
-            onSelect={handleSelectChapter}
-            color={grade.color}
-          />
-        </section>
+            <section className="flex flex-col gap-5">
+              <StepLabel num={2} text="챕터를 선택하세요" color={grade.color} />
+              <ChapterSelector
+                chapters={grade.chapters}
+                selected={chapIdx}
+                onSelect={handleSelectChapter}
+                color={grade.color}
+              />
+            </section>
 
-        <section className="flex flex-col gap-5">
-          <StepLabel num={3} text="몇 장 출력할까요?" color={grade.color} />
-          <SheetCountControl count={sheetCount} onChange={handleChangeCount} color={grade.color} />
-        </section>
+            <section className="flex flex-col gap-5">
+              <StepLabel num={3} text="몇 장 출력할까요?" color={grade.color} />
+              <SheetCountControl count={sheetCount} onChange={handleChangeCount} color={grade.color} />
+            </section>
+          </div>
 
-        {sheets.length > 0 && (
-          <PreviewSection
-            sheets={sheets}
-            currentSheet={currentSheet}
-            onNavigate={setCurrentSheet}
-            showAnswers={showAnswers}
-            onToggleAnswers={() => setShowAnswers(v => !v)}
-            grade={grade}
-            chapter={chapter}
-            cols={cols}
-            sheetCount={sheetCount}
-          />
-        )}
+          {/* 오른쪽: 프리뷰 (wide 화면에서 sticky) */}
+          {sheets.length > 0 && (
+            <div id="preview-section" className="lg:sticky lg:top-4">
+              <PreviewSection
+                sheets={sheets}
+                currentSheet={currentSheet}
+                onNavigate={setCurrentSheet}
+                showAnswers={showAnswers}
+                onToggleAnswers={() => setShowAnswers(v => !v)}
+                grade={grade}
+                chapter={chapter}
+                cols={cols}
+                sheetCount={sheetCount}
+              />
+            </div>
+          )}
+        </div>
       </main>
 
       {sheets.length > 0 && (

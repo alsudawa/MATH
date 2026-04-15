@@ -9,7 +9,7 @@ interface Props {
 
 export default function ChapterSelector({ chapters, selected, onSelect, color }: Props) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
       {chapters.map((ch, i) => {
         const active = i === selected;
         return (
