@@ -35,6 +35,19 @@ type Generator = (rng: SeededRandom, opts?: GeneratorOptions) => Problem;
 
 // ==================== HELPERS ====================
 
+/** Render an integer via KaTeX (for consistent sizing with fractions) */
+function kN(n: number): string {
+  if (n < 0) return K(`(${n})`);
+  return K(String(n));
+}
+
+/** Render "op n" with proper sign merging (e.g. "− (−3)" → "+ 3") */
+function kOpN(op: '+' | '−', n: number): string {
+  if (op === '−' && n < 0) return `+ ${kN(Math.abs(n))}`;
+  if (op === '+' && n < 0) return `− ${kN(Math.abs(n))}`;
+  return `${op} ${kN(n)}`;
+}
+
 function coefXStr(n: number): string {
   if (n === 1) return 'x';
   if (n === -1) return '−x';
@@ -497,12 +510,12 @@ export const GENERATORS: Record<string, Generator> = {
     const an = rng.int(1, 6), ad = rng.int(2, 8);
     if (rng.int(0, 1) === 0) {
       return {
-        display: `${n} × ${fracHTMLRaw(an, ad)} = %%BLANK%%`,
+        display: `${kN(n)} × ${fracHTMLRaw(an, ad)} = %%BLANK%%`,
         answer: fracHTML(n * an, ad),
       };
     } else {
       return {
-        display: `${fracHTMLRaw(an, ad)} × ${n} = %%BLANK%%`,
+        display: `${fracHTMLRaw(an, ad)} × ${kN(n)} = %%BLANK%%`,
         answer: fracHTML(n * an, ad),
       };
     }
@@ -516,7 +529,7 @@ export const GENERATORS: Record<string, Generator> = {
     const imp1 = w1 * d + n1, imp2 = w2 * d + n2;
     // helper: build mixed-number answer with properly reduced fractional part
     const mixedAns = (wr: number, nr: number) =>
-      nr === 0 ? String(wr) : wr === 0 ? fracHTML(nr, d) : `${wr} ${fracHTML(nr, d)}`;
+      nr === 0 ? K(String(wr)) : wr === 0 ? fracHTML(nr, d) : `${K(String(wr))} ${fracHTML(nr, d)}`;
 
     if (imp1 === imp2) {
       // avoid trivial X − X = 0: bump n2 by 1 (mod d, keeping it a proper fraction)
@@ -526,14 +539,14 @@ export const GENERATORS: Record<string, Generator> = {
       const answer = mixedAns(Math.floor(diff / d), diff % d);
       const [bw, bn] = imp1 >= imp2b ? [w1, n1] : [w2, n2b];
       const [sw, sn] = imp1 >= imp2b ? [w2, n2b] : [w1, n1];
-      return { display: `${bw} ${fracHTMLRaw(bn, d)} − ${sw} ${fracHTMLRaw(sn, d)} = %%BLANK%%`, answer };
+      return { display: `${K(String(bw))} ${fracHTMLRaw(bn, d)} − ${K(String(sw))} ${fracHTMLRaw(sn, d)} = %%BLANK%%`, answer };
     }
 
     if (rng.int(0, 1) === 0) {
       const total = imp1 + imp2;
       const answer = mixedAns(Math.floor(total / d), total % d);
       return {
-        display: `${w1} ${fracHTMLRaw(n1, d)} + ${w2} ${fracHTMLRaw(n2, d)} = %%BLANK%%`,
+        display: `${K(String(w1))} ${fracHTMLRaw(n1, d)} + ${K(String(w2))} ${fracHTMLRaw(n2, d)} = %%BLANK%%`,
         answer,
       };
     } else {
@@ -543,7 +556,7 @@ export const GENERATORS: Record<string, Generator> = {
       const diff = big - small;
       const answer = mixedAns(Math.floor(diff / d), diff % d);
       return {
-        display: `${bw} ${fracHTMLRaw(bn, d)} − ${sw} ${fracHTMLRaw(sn, d)} = %%BLANK%%`,
+        display: `${K(String(bw))} ${fracHTMLRaw(bn, d)} − ${K(String(sw))} ${fracHTMLRaw(sn, d)} = %%BLANK%%`,
         answer,
       };
     }
@@ -710,14 +723,14 @@ export const GENERATORS: Record<string, Generator> = {
       // multiplication
       const rn = imp1 * imp2, rd = d1 * d2;
       return {
-        display: `${w1} ${fracHTMLRaw(n1, d1)} × ${w2} ${fracHTMLRaw(n2, d2)} = %%BLANK%%`,
+        display: `${K(String(w1))} ${fracHTMLRaw(n1, d1)} × ${K(String(w2))} ${fracHTMLRaw(n2, d2)} = %%BLANK%%`,
         answer: fracHTML(rn, rd),
       };
     } else {
       // division: imp1/d1 ÷ imp2/d2 = imp1*d2 / (d1*imp2)
       const rn = imp1 * d2, rd = d1 * imp2;
       return {
-        display: `${w1} ${fracHTMLRaw(n1, d1)} ÷ ${w2} ${fracHTMLRaw(n2, d2)} = %%BLANK%%`,
+        display: `${K(String(w1))} ${fracHTMLRaw(n1, d1)} ÷ ${K(String(w2))} ${fracHTMLRaw(n2, d2)} = %%BLANK%%`,
         answer: fracHTML(rn, rd),
       };
     }
@@ -977,21 +990,21 @@ export const GENERATORS: Record<string, Generator> = {
       const sum_n = prod_n * sbd + sbn * prod_d;
       const sum_d = prod_d * sbd;
       return {
-        display: `${fracHTMLParenRaw(san, sad)} × ${fmtN(k)} + ${fracHTMLParenRaw(sbn, sbd)} = %%BLANK%%`,
+        display: `${fracHTMLParenRaw(san, sad)} × ${kN(k)} + ${fracHTMLParenRaw(sbn, sbd)} = %%BLANK%%`,
         answer: fracHTML(sum_n, sum_d),
       };
     } else {
       // (an/ad) ÷ (bn/bd) − k: = (an*bd)/(ad*bn) − k
       if (sbn === 0) {
         return {
-          display: `${fracHTMLParenRaw(san, sad)} × ${fmtN(k)} + ${fracHTMLParenRaw(1, sbd)} = %%BLANK%%`,
+          display: `${fracHTMLParenRaw(san, sad)} × ${kN(k)} + ${fracHTMLParenRaw(1, sbd)} = %%BLANK%%`,
           answer: fracHTML(san * k * sbd + sad, sad * sbd),
         };
       }
       const rn = san * sbd, rd = sad * sbn;
       const final_n = rn - k * rd;
       return {
-        display: `${fracHTMLParenRaw(san, sad)} ÷ ${fracHTMLParenRaw(sbn, sbd)} − ${fmtN(k)} = %%BLANK%%`,
+        display: `${fracHTMLParenRaw(san, sad)} ÷ ${fracHTMLParenRaw(sbn, sbd)} ${kOpN('−', k)} = %%BLANK%%`,
         answer: fracHTML(final_n, rd),
       };
     }
