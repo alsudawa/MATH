@@ -4,6 +4,8 @@ export interface Chapter {
   id: string;
   name: string;
   perPage: number;
+  prereqs?: string[];       // 선수학습 챕터 ID (예: ['E1-05', 'E1-06'])
+  difficulty?: 1 | 2 | 3;  // 기본 난이도 (1=쉬움, 2=보통, 3=어려움)
 }
 
 export interface GradeGroup {

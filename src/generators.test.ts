@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { GENERATORS, generateProblems } from './generators';
+import { GENERATORS, generateProblems, generateMultiChapterProblems } from './generators';
 import { GRADE_DATA } from './data';
 import { SeededRandom, gcd } from './utils';
 
@@ -474,5 +474,62 @@ describe('generateProblems()', () => {
     const displays1 = p1.map(p => p.display).join('|');
     const displays2 = p2.map(p => p.display).join('|');
     expect(displays1).not.toBe(displays2);
+  });
+});
+
+// ==================== DIFFICULTY LEVELS ====================
+
+describe('Difficulty parameter', () => {
+  it('generators accept difficulty option without error', () => {
+    const allGeneratorIds = Object.keys(GENERATORS);
+    for (const id of allGeneratorIds) {
+      const gen = GENERATORS[id];
+      for (const d of [1, 2, 3] as const) {
+        const rng = new SeededRandom('DTEST');
+        const p = gen(rng, { difficulty: d });
+        expect(p.display).toBeTruthy();
+        expect(p.answer).toBeTruthy();
+        expect(p.display).toContain('%%BLANK%%');
+      }
+    }
+  });
+
+  it('E1-01 difficulty 1 produces smaller numbers (max sum <= 5)', () => {
+    for (const seed of SEEDS.slice(0, 50)) {
+      const rng = new SeededRandom(seed);
+      const p = GENERATORS['E1-01'](rng, { difficulty: 1 });
+      const answer = Number(p.answer);
+      expect(answer).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it('E2-06 difficulty 1 keeps both operands under 50', () => {
+    for (const seed of SEEDS.slice(0, 50)) {
+      const rng = new SeededRandom(seed);
+      const p = GENERATORS['E2-06'](rng, { difficulty: 1 });
+      const plain = p.display.replace(' = %%BLANK%%', '');
+      const [a, b] = plain.split(' × ').map(Number);
+      expect(a).toBeLessThan(50);
+      expect(b).toBeLessThan(50);
+    }
+  });
+
+  it('generateProblems passes difficulty option correctly', () => {
+    const p1 = generateProblems('E1', '01', 'DIFFX', 20, { difficulty: 1 });
+    for (const p of p1) {
+      expect(Number(p.answer)).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it('generateMultiChapterProblems combines multiple chapters', () => {
+    const problems = generateMultiChapterProblems([
+      { gradeCode: 'E1', chapId: '01', count: 5 },
+      { gradeCode: 'E1', chapId: '02', count: 5 },
+    ], 'MULTI');
+    expect(problems).toHaveLength(10);
+    for (const p of problems) {
+      expect(p.display).toContain('%%BLANK%%');
+      expect(p.answer).toBeTruthy();
+    }
   });
 });

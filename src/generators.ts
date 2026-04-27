@@ -7,12 +7,31 @@ function K(latex: string): string {
 
 // ==================== TYPES ====================
 
+export interface SolutionStep {
+  explanation: string;  // 풀이 설명 (HTML)
+  expression: string;   // 풀이 수식 (HTML)
+}
+
+export interface ExpectedError {
+  answer: string;            // 예상 오답
+  misconceptionId: string;   // 오개념 ID
+  remediation: string;       // 교정 안내
+}
+
 export interface Problem {
   display: string;  // HTML, %%BLANK%% 마커 포함
   answer: string;   // HTML
+  difficulty?: 1 | 2 | 3;
+  solution?: SolutionStep[];
+  speakText?: string;
+  expectedErrors?: ExpectedError[];
 }
 
-type Generator = (rng: SeededRandom) => Problem;
+export interface GeneratorOptions {
+  difficulty?: 1 | 2 | 3;
+}
+
+type Generator = (rng: SeededRandom, opts?: GeneratorOptions) => Problem;
 
 // ==================== HELPERS ====================
 
@@ -54,53 +73,75 @@ export const GENERATORS: Record<string, Generator> = {
 
   // ===== E1 (초등 1~2학년) =====
 
-  'E1-01': (rng) => {
-    const a = rng.int(1, 8);
-    const b = rng.int(1, 9 - a);
+  'E1-01': (rng, opts) => {
+    const d = opts?.difficulty ?? 2;
+    const max = d === 1 ? 5 : d === 2 ? 9 : 9;
+    const a = rng.int(1, max - 1);
+    const bMax = d === 3 ? max - a : Math.min(max - a, 9 - a);
+    const b = rng.int(1, bMax);
+    if (d === 3 && rng.int(0, 1) === 0) {
+      // 어려움: 빈칸 위치 변형
+      return { display: `${a} + %%BLANK%% = ${a + b}`, answer: String(b) };
+    }
     return { display: `${a} + ${b} = %%BLANK%%`, answer: String(a + b) };
   },
 
-  'E1-02': (rng) => {
-    const a = rng.int(2, 9);
-    const b = rng.int(1, a - 1); // 결과 > 0 보장
+  'E1-02': (rng, opts) => {
+    const d = opts?.difficulty ?? 2;
+    const max = d === 1 ? 5 : 9;
+    const a = rng.int(2, max);
+    const b = rng.int(1, a - 1);
+    if (d === 3 && rng.int(0, 1) === 0) {
+      return { display: `%%BLANK%% − ${b} = ${a - b}`, answer: String(a) };
+    }
     return { display: `${a} − ${b} = %%BLANK%%`, answer: String(a - b) };
   },
 
-  'E1-03': (rng) => {
+  'E1-03': (rng, opts) => {
     // 두 자리 덧셈, 받아올림 없음: ones 합 < 10
+    const d = opts?.difficulty ?? 2;
+    const aMin = d === 1 ? 10 : d === 2 ? 10 : 30;
+    const aMax = d === 1 ? 49 : d === 2 ? 89 : 89;
     let a: number, b: number;
     do {
-      a = rng.int(10, 89);
+      a = rng.int(aMin, aMax);
       b = rng.int(10, 99 - a);
     } while ((a % 10) + (b % 10) >= 10);
     return { display: `${a} + ${b} = %%BLANK%%`, answer: String(a + b) };
   },
 
-  'E1-04': (rng) => {
+  'E1-04': (rng, opts) => {
     // 두 자리 뺄셈, 받아내림 없음: ones(a) >= ones(b)
+    const d = opts?.difficulty ?? 2;
+    const aMin = d === 1 ? 11 : d === 2 ? 11 : 50;
     let a: number, b: number;
     do {
-      a = rng.int(11, 99);
+      a = rng.int(aMin, 99);
       b = rng.int(10, a - 1);
     } while ((a % 10) < (b % 10));
     return { display: `${a} − ${b} = %%BLANK%%`, answer: String(a - b) };
   },
 
-  'E1-05': (rng) => {
+  'E1-05': (rng, opts) => {
     // 두 자리 덧셈, 받아올림 있음: ones 합 >= 10
+    const d = opts?.difficulty ?? 2;
+    const aMin = d === 1 ? 10 : d === 2 ? 10 : 40;
+    const aMax = d === 1 ? 59 : d === 2 ? 89 : 89;
     let a: number, b: number;
     do {
-      a = rng.int(10, 89);
+      a = rng.int(aMin, aMax);
       b = rng.int(10, 99 - a);
     } while ((a % 10) + (b % 10) < 10);
     return { display: `${a} + ${b} = %%BLANK%%`, answer: String(a + b) };
   },
 
-  'E1-06': (rng) => {
+  'E1-06': (rng, opts) => {
     // 두 자리 뺄셈, 받아내림 있음: ones(a) < ones(b)
+    const d = opts?.difficulty ?? 2;
+    const aMin = d === 1 ? 11 : d === 2 ? 11 : 50;
     let a: number, b: number;
     do {
-      a = rng.int(11, 99);
+      a = rng.int(aMin, 99);
       b = rng.int(10, a - 1);
     } while ((a % 10) >= (b % 10) || (b % 10) === 0);
     return { display: `${a} − ${b} = %%BLANK%%`, answer: String(a - b) };
@@ -211,9 +252,14 @@ export const GENERATORS: Record<string, Generator> = {
     return { display: `${b * q} ÷ ${b} = %%BLANK%%`, answer: String(q) };
   },
 
-  'E2-06': (rng) => {
-    const a = rng.int(11, 99);
-    const b = rng.int(11, 99);
+  'E2-06': (rng, opts) => {
+    const d = opts?.difficulty ?? 2;
+    const aMin = d === 1 ? 11 : d === 2 ? 11 : 50;
+    const aMax = d === 1 ? 49 : d === 2 ? 99 : 99;
+    const bMin = d === 1 ? 11 : d === 2 ? 11 : 50;
+    const bMax = d === 1 ? 49 : d === 2 ? 99 : 99;
+    const a = rng.int(aMin, aMax);
+    const b = rng.int(bMin, bMax);
     return { display: `${a} × ${b} = %%BLANK%%`, answer: String(a * b) };
   },
 
@@ -768,10 +814,28 @@ export const GENERATORS: Record<string, Generator> = {
     return { display, answer };
   },
 
-  'M1-05': (rng) => {
-    // 일차방정식: ax + b = c
-    const a = rng.int(1, 8) * (rng.int(0, 1) ? 1 : -1);
-    const x = nonZeroInt(rng, -10, 10);
+  'M1-05': (rng, opts) => {
+    // 일차방정식: ax + b = c (쉬움: a=1~3, 보통: a=1~8, 어려움: ax+b=cx+d)
+    const d = opts?.difficulty ?? 2;
+    if (d === 3) {
+      // 어려움: ax + b = cx + d 형태
+      const a = rng.int(2, 7);
+      let cCoef: number;
+      do { cCoef = rng.int(1, 6); } while (cCoef === a);
+      const x = nonZeroInt(rng, -8, 8);
+      const bVal = nonZeroInt(rng, -9, 9);
+      const dVal = (a - cCoef) * x + bVal;
+      const aStr = a === 1 ? 'x' : `${a}x`;
+      const cStr = cCoef === 1 ? 'x' : `${cCoef}x`;
+      return {
+        display: `${aStr} ${signStr(bVal)} = ${cStr} ${signStr(dVal)},&nbsp; x = %%BLANK%%`,
+        answer: fmtN(x),
+      };
+    }
+    const aMax = d === 1 ? 3 : 8;
+    const xMax = d === 1 ? 5 : 10;
+    const a = rng.int(1, aMax) * (rng.int(0, 1) ? 1 : -1);
+    const x = nonZeroInt(rng, -xMax, xMax);
     const b = nonZeroInt(rng, -9, 9);
     const c = a * x + b;
     const aStr = a === 1 ? 'x' : a === -1 ? '−x' : `${a}x`;
@@ -1407,11 +1471,30 @@ export function generateProblems(
   gradeCode: string,
   chapId: string,
   seed: string,
-  perPage: number
+  perPage: number,
+  options?: GeneratorOptions
 ): Problem[] {
   const key = `${gradeCode}-${chapId}`;
   const gen = GENERATORS[key];
   if (!gen) return [];
   const rng = new SeededRandom(seed);
-  return Array.from({ length: perPage }, () => gen(rng));
+  return Array.from({ length: perPage }, () => gen(rng, options));
+}
+
+export function generateMultiChapterProblems(
+  chapters: Array<{ gradeCode: string; chapId: string; count: number }>,
+  seed: string,
+  options?: GeneratorOptions
+): Problem[] {
+  const rng = new SeededRandom(seed);
+  const problems: Problem[] = [];
+  for (const { gradeCode, chapId, count } of chapters) {
+    const key = `${gradeCode}-${chapId}`;
+    const gen = GENERATORS[key];
+    if (!gen) continue;
+    for (let i = 0; i < count; i++) {
+      problems.push(gen(rng, options));
+    }
+  }
+  return problems;
 }

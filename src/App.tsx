@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { GRADE_DATA, parseWid, buildWid, buildURL, colsForPerPage } from './data';
 import { newSeed, deriveSeeds } from './utils';
-import { generateProblems, Problem } from './generators';
+import { generateProblems, Problem, GeneratorOptions } from './generators';
 import Header from './components/Header';
 import GradeSelector from './components/GradeSelector';
 import ChapterSelector from './components/ChapterSelector';
@@ -19,6 +19,7 @@ export default function App() {
   const [gradeCode, setGradeCode] = useState('E2');
   const [chapIdx, setChapIdx] = useState(0);
   const [sheetCount, setSheetCount] = useState(1);
+  const [difficulty, setDifficulty] = useState<1 | 2 | 3>(2);
   const [sheets, setSheets] = useState<Sheet[]>([]);
   const [currentSheet, setCurrentSheet] = useState(0);
   const [showAnswers, setShowAnswers] = useState(false);
@@ -28,7 +29,7 @@ export default function App() {
   const chapter = grade.chapters[chapIdx] ?? grade.chapters[0];
 
   // 문제 생성 (explicit params → stale closure 없음)
-  const generate = useCallback((gCode: string, chIdx: number, count: number, scroll = false) => {
+  const generate = useCallback((gCode: string, chIdx: number, count: number, opts?: GeneratorOptions, scroll = false) => {
     const g = GRADE_DATA.find(x => x.code === gCode) ?? GRADE_DATA[0];
     const ch = g.chapters[chIdx] ?? g.chapters[0];
     const baseSeed = newSeed();
@@ -36,7 +37,7 @@ export default function App() {
     const newSheets = allSeeds.map(seed => ({
       wid: buildWid(gCode, ch.id, seed),
       seed,
-      problems: generateProblems(gCode, ch.id, seed, ch.perPage),
+      problems: generateProblems(gCode, ch.id, seed, ch.perPage, opts),
     }));
     setSheets(newSheets);
     setCurrentSheet(0);
@@ -54,7 +55,7 @@ export default function App() {
     const params = new URLSearchParams(location.search);
     const wid = params.get('wid');
     if (wid) {
-      const n = Math.max(1, Math.min(20, parseInt(params.get('n') ?? '1') || 1));
+      const n = Math.max(1, Math.min(35, parseInt(params.get('n') ?? '1') || 1));
       const isAnswers = params.get('answers') === '1';
       const parsed = parseWid(wid);
       if (!parsed) { generate('E2', 0, 1); return; }
@@ -81,19 +82,24 @@ export default function App() {
   const handleSelectGrade = useCallback((code: string) => {
     setGradeCode(code);
     setChapIdx(0);
-    generate(code, 0, sheetCount);
-  }, [sheetCount, generate]);
+    generate(code, 0, sheetCount, { difficulty });
+  }, [sheetCount, difficulty, generate]);
 
   const handleSelectChapter = useCallback((idx: number) => {
     setChapIdx(idx);
-    generate(gradeCode, idx, sheetCount);
-  }, [gradeCode, sheetCount, generate]);
+    generate(gradeCode, idx, sheetCount, { difficulty });
+  }, [gradeCode, sheetCount, difficulty, generate]);
 
   const handleChangeCount = useCallback((n: number) => {
-    const clamped = Math.max(1, Math.min(20, n));
+    const clamped = Math.max(1, Math.min(35, n));
     setSheetCount(clamped);
-    generate(gradeCode, chapIdx, clamped);
-  }, [gradeCode, chapIdx, generate]);
+    generate(gradeCode, chapIdx, clamped, { difficulty });
+  }, [gradeCode, chapIdx, difficulty, generate]);
+
+  const handleChangeDifficulty = useCallback((d: 1 | 2 | 3) => {
+    setDifficulty(d);
+    generate(gradeCode, chapIdx, sheetCount, { difficulty: d });
+  }, [gradeCode, chapIdx, sheetCount, generate]);
 
   const handleWidNavigate = useCallback((wid: string): boolean => {
     const parsed = parseWid(wid);
@@ -156,7 +162,12 @@ export default function App() {
             </section>
 
             <section className="flex flex-col gap-5">
-              <StepLabel num={3} text="몇 장 출력할까요?" color={grade.color} />
+              <StepLabel num={3} text="난이도를 선택하세요" color={grade.color} />
+              <DifficultySelector difficulty={difficulty} onChange={handleChangeDifficulty} color={grade.color} />
+            </section>
+
+            <section className="flex flex-col gap-5">
+              <StepLabel num={4} text="몇 장 출력할까요?" color={grade.color} />
               <SheetCountControl count={sheetCount} onChange={handleChangeCount} color={grade.color} />
             </section>
           </div>
@@ -201,7 +212,7 @@ function SheetCountControl({ count, onChange }: { count: number; onChange: (n: n
         <span className="w-10 text-center text-lg font-bold text-slate-800 tabular-nums">{count}</span>
         <button
           onClick={() => onChange(count + 1)}
-          disabled={count >= 20}
+          disabled={count >= 35}
           className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center font-bold text-slate-600 transition-colors text-lg disabled:opacity-30"
         >
           +
@@ -211,6 +222,27 @@ function SheetCountControl({ count, onChange }: { count: number; onChange: (n: n
       {count > 1 && (
         <span className="text-sm text-slate-400">{count}장이 한 세트로 생성됩니다</span>
       )}
+    </div>
+  );
+}
+
+function DifficultySelector({ difficulty, onChange, color }: { difficulty: 1 | 2 | 3; onChange: (d: 1 | 2 | 3) => void; color: string }) {
+  const labels: Record<1 | 2 | 3, string> = { 1: '쉬움', 2: '보통', 3: '어려움' };
+  return (
+    <div className="flex gap-2">
+      {([1, 2, 3] as const).map(d => (
+        <button
+          key={d}
+          onClick={() => onChange(d)}
+          className="px-4 py-2 rounded-xl font-bold text-sm border-2 transition-all"
+          style={difficulty === d
+            ? { background: color, borderColor: color, color: '#fff' }
+            : { background: '#fff', borderColor: '#e2e8f0', color: '#475569' }
+          }
+        >
+          {labels[d]}
+        </button>
+      ))}
     </div>
   );
 }
