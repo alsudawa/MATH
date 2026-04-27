@@ -6,6 +6,7 @@ import Header from './components/Header';
 import GradeSelector from './components/GradeSelector';
 import ChapterSelector from './components/ChapterSelector';
 import PreviewSection from './components/PreviewSection';
+import PracticeMode from './components/PracticeMode';
 import PrintArea from './components/PrintArea';
 import AnswersPage from './components/AnswersPage';
 
@@ -24,6 +25,7 @@ export default function App() {
   const [currentSheet, setCurrentSheet] = useState(0);
   const [showAnswers, setShowAnswers] = useState(false);
   const [answersMode, setAnswersMode] = useState(false);
+  const [practiceMode, setPracticeMode] = useState(false);
 
   const grade = GRADE_DATA.find(g => g.code === gradeCode) ?? GRADE_DATA[0];
   const chapter = grade.chapters[chapIdx] ?? grade.chapters[0];
@@ -42,6 +44,7 @@ export default function App() {
     setSheets(newSheets);
     setCurrentSheet(0);
     setShowAnswers(false);
+    setPracticeMode(false);
     history.replaceState(null, '', buildURL(newSheets[0].wid, count));
     if (scroll) {
       setTimeout(() => {
@@ -172,20 +175,31 @@ export default function App() {
             </section>
           </div>
 
-          {/* 오른쪽: 프리뷰 (wide 화면에서 sticky) */}
+          {/* 오른쪽: 프리뷰 또는 연습 모드 */}
           {sheets.length > 0 && (
             <div id="preview-section" className="lg:sticky lg:top-4">
-              <PreviewSection
-                sheets={sheets}
-                currentSheet={currentSheet}
-                onNavigate={setCurrentSheet}
-                showAnswers={showAnswers}
-                onToggleAnswers={() => setShowAnswers(v => !v)}
-                grade={grade}
-                chapter={chapter}
-                cols={cols}
-                sheetCount={sheetCount}
-              />
+              {practiceMode ? (
+                <PracticeMode
+                  sheet={sheets[currentSheet]}
+                  grade={grade}
+                  chapter={chapter}
+                  cols={cols}
+                  onExit={() => setPracticeMode(false)}
+                />
+              ) : (
+                <PreviewSection
+                  sheets={sheets}
+                  currentSheet={currentSheet}
+                  onNavigate={setCurrentSheet}
+                  showAnswers={showAnswers}
+                  onToggleAnswers={() => setShowAnswers(v => !v)}
+                  onStartPractice={() => setPracticeMode(true)}
+                  grade={grade}
+                  chapter={chapter}
+                  cols={cols}
+                  sheetCount={sheetCount}
+                />
+              )}
             </div>
           )}
         </div>

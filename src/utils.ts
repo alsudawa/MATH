@@ -125,3 +125,34 @@ export function renderWithAnswer(display: string, answer: string, color: string)
   let idx = 0;
   return display.replace(/%%BLANK%%/g, () => styled(vals[idx++] ?? answer));
 }
+
+// ==================== GRADING ====================
+
+function stripHTML(html: string): string {
+  return html.replace(/<[^>]+>/g, '').trim();
+}
+
+function normalizeAnswer(s: string): string {
+  return s
+    .replace(/\s+/g, '')
+    .replace(/[−–—]/g, '-')  // typographic minus → ASCII
+    .replace(/,/g, '')
+    .toLowerCase();
+}
+
+export function checkAnswer(userInput: string, correctHTML: string): boolean {
+  const correct = normalizeAnswer(stripHTML(correctHTML));
+  const user = normalizeAnswer(userInput);
+  if (!user) return false;
+  if (user === correct) return true;
+  // fraction equivalence: 2/4 == 1/2
+  const fracRe = /^(-?\d+)\/(\d+)$/;
+  const um = fracRe.exec(user), cm = fracRe.exec(correct);
+  if (um && cm) {
+    return Number(um[1]) * Number(cm[2]) === Number(cm[1]) * Number(um[2]);
+  }
+  // numeric equivalence: 0.5 == .5 == 0.50
+  const un = Number(user), cn = Number(correct);
+  if (!isNaN(un) && !isNaN(cn) && un === cn) return true;
+  return false;
+}

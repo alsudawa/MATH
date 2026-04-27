@@ -11,6 +11,7 @@ interface Props {
   onNavigate: (i: number) => void;
   showAnswers: boolean;
   onToggleAnswers: () => void;
+  onStartPractice: () => void;
   grade: GradeGroup;
   chapter: Chapter;
   cols: number;
@@ -19,7 +20,7 @@ interface Props {
 
 export default function PreviewSection({
   sheets, currentSheet, onNavigate,
-  showAnswers, onToggleAnswers,
+  showAnswers, onToggleAnswers, onStartPractice,
   grade, chapter, cols, sheetCount,
 }: Props) {
   const qrRef = useRef<HTMLDivElement>(null);
@@ -69,6 +70,13 @@ export default function PreviewSection({
         {/* 액션 */}
         <div className="flex gap-2 flex-shrink-0">
           <button
+            onClick={onStartPractice}
+            className="px-3 py-1.5 rounded-lg border-2 font-bold text-sm transition-all hover:opacity-90"
+            style={{ borderColor: grade.color, color: grade.color }}
+          >
+            풀기
+          </button>
+          <button
             onClick={onToggleAnswers}
             className="px-3 py-1.5 rounded-lg border-2 border-slate-200 bg-white text-slate-600 font-bold text-sm hover:border-slate-300 transition-all"
           >
@@ -79,7 +87,7 @@ export default function PreviewSection({
             className="px-3 py-1.5 rounded-lg text-white font-bold text-sm transition-all hover:opacity-90"
             style={{ background: grade.color }}
           >
-            🖨️ 인쇄
+            인쇄
           </button>
         </div>
       </div>

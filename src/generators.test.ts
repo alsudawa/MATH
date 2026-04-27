@@ -10,7 +10,7 @@
 import { describe, it, expect } from 'vitest';
 import { GENERATORS, generateProblems, generateMultiChapterProblems } from './generators';
 import { GRADE_DATA } from './data';
-import { SeededRandom, gcd } from './utils';
+import { SeededRandom, gcd, checkAnswer } from './utils';
 
 // ==================== HELPERS ====================
 
@@ -531,5 +531,52 @@ describe('Difficulty parameter', () => {
       expect(p.display).toContain('%%BLANK%%');
       expect(p.answer).toBeTruthy();
     }
+  });
+});
+
+// ==================== checkAnswer TESTS ====================
+
+describe('checkAnswer', () => {
+  it('matches exact text after HTML stripping', () => {
+    expect(checkAnswer('42', '<span>42</span>')).toBe(true);
+    expect(checkAnswer('42', '42')).toBe(true);
+  });
+
+  it('rejects empty input', () => {
+    expect(checkAnswer('', '42')).toBe(false);
+    expect(checkAnswer('  ', '42')).toBe(false);
+  });
+
+  it('handles fraction equivalence', () => {
+    expect(checkAnswer('2/4', '1/2')).toBe(true);
+    expect(checkAnswer('3/6', '1/2')).toBe(true);
+    expect(checkAnswer('1/3', '1/2')).toBe(false);
+  });
+
+  it('handles negative fractions', () => {
+    expect(checkAnswer('-1/2', '-2/4')).toBe(true);
+    expect(checkAnswer('-1/2', '1/2')).toBe(false);
+  });
+
+  it('handles numeric equivalence', () => {
+    expect(checkAnswer('0.5', '.5')).toBe(true);
+    expect(checkAnswer('0.50', '0.5')).toBe(true);
+    expect(checkAnswer('1.0', '1')).toBe(true);
+  });
+
+  it('normalizes typographic minus signs', () => {
+    expect(checkAnswer('− 3', '-3')).toBe(true);
+    expect(checkAnswer('–3', '-3')).toBe(true);
+  });
+
+  it('ignores whitespace differences', () => {
+    expect(checkAnswer(' 42 ', '42')).toBe(true);
+    expect(checkAnswer('4 2', '42')).toBe(true);
+  });
+
+  it('handles KaTeX HTML answers', () => {
+    const katexHtml = '<span class="katex"><span class="katex-html"><span>7</span></span></span>';
+    expect(checkAnswer('7', katexHtml)).toBe(true);
+    expect(checkAnswer('8', katexHtml)).toBe(false);
   });
 });
