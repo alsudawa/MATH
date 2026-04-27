@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Sheet } from '../App';
 import { GradeGroup, Chapter, buildAnswerURL } from '../data';
 import { renderDisplay, renderWithAnswer } from '../utils';
@@ -24,6 +24,29 @@ export default function PreviewSection({
 }: Props) {
   const qrRef = useRef<HTMLDivElement>(null);
   const sheet = sheets[currentSheet];
+
+  // ---- timer ----
+  const [timerSecs, setTimerSecs] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Reset timer when a new sheet set is generated
+  useEffect(() => {
+    setTimerSecs(0);
+    setTimerRunning(false);
+  }, [sheets]);
+
+  useEffect(() => {
+    if (timerRunning) {
+      timerRef.current = setInterval(() => setTimerSecs(s => s + 1), 1000);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [timerRunning]);
+
+  const timerStr = `${String(Math.floor(timerSecs / 60)).padStart(2, '0')}:${String(timerSecs % 60).padStart(2, '0')}`;
+  // ---------------
 
   useEffect(() => {
     if (!qrRef.current) return;
@@ -61,6 +84,31 @@ export default function PreviewSection({
               hover:border-slate-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-sm"
           >
             ▶
+          </button>
+        </div>
+
+        {/* 타이머 */}
+        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 flex-shrink-0">
+          <span className="font-mono font-bold text-sm tabular-nums text-slate-700 min-w-[40px]">
+            {timerStr}
+          </span>
+          <button
+            onClick={() => setTimerRunning(r => !r)}
+            className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+            style={timerRunning
+              ? { background: grade.color, color: '#fff' }
+              : { background: '#e2e8f0', color: '#475569' }
+            }
+            title={timerRunning ? '일시정지' : '시작'}
+          >
+            {timerRunning ? '⏸' : '▶'}
+          </button>
+          <button
+            onClick={() => { setTimerSecs(0); setTimerRunning(false); }}
+            className="w-6 h-6 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-xs font-bold text-slate-500 transition-colors"
+            title="리셋"
+          >
+            ↺
           </button>
         </div>
 

@@ -80,6 +80,25 @@ function nonZeroInt(rng: SeededRandom, min: number, max: number): number {
   return v;
 }
 
+/** Build a degree-2 polynomial string: ax² + bx + c */
+function poly2Str(a: number, b: number, c: number): string {
+  let result = '';
+  if (a !== 0) {
+    const coef = Math.abs(a) === 1 ? '' : String(Math.abs(a));
+    result += (a < 0 ? '−' : '') + coef + 'x²';
+  }
+  if (b !== 0) {
+    const coef = Math.abs(b) === 1 ? '' : String(Math.abs(b));
+    if (result === '') result += (b < 0 ? '−' : '') + coef + 'x';
+    else result += (b < 0 ? ' − ' : ' + ') + coef + 'x';
+  }
+  if (c !== 0) {
+    if (result === '') result += fmtN(c);
+    else result += c < 0 ? ` − ${Math.abs(c)}` : ` + ${c}`;
+  }
+  return result || '0';
+}
+
 // ==================== GENERATORS ====================
 
 export const GENERATORS: Record<string, Generator> = {
@@ -1474,6 +1493,221 @@ export const GENERATORS: Record<string, Generator> = {
       display: `x²${bStr}${cStr}을 완전제곱식으로&nbsp; (x${pStr})²${qStr} = %%BLANK%%`,
       answer: `(x${pStr})²${qStr}`,
     };
+  },
+
+  // ===== H1 (고등학교 1학년) =====
+
+  'H1-01': (rng) => {
+    // 다항식의 덧셈과 뺄셈: (ax² + bx + c) ± (dx² + ex + f)
+    const a = nonZeroInt(rng, -4, 4), b = nonZeroInt(rng, -6, 6), c = nonZeroInt(rng, -9, 9);
+    const d = nonZeroInt(rng, -4, 4), e = nonZeroInt(rng, -6, 6), f = nonZeroInt(rng, -9, 9);
+    const op = rng.int(0, 1) === 0 ? '+' : '−';
+    const ra = op === '+' ? a + d : a - d;
+    const rb = op === '+' ? b + e : b - e;
+    const rc = op === '+' ? c + f : c - f;
+    return {
+      display: `(${poly2Str(a, b, c)}) ${op} (${poly2Str(d, e, f)}) = %%BLANK%%`,
+      answer: poly2Str(ra, rb, rc),
+    };
+  },
+
+  'H1-02': (rng) => {
+    // 다항식의 곱셈: (ax + b)(cx² + dx + e) 전개
+    const a = nonZeroInt(rng, -3, 3), b = nonZeroInt(rng, -5, 5);
+    const c = rng.int(1, 3), d = nonZeroInt(rng, -4, 4), e = nonZeroInt(rng, -6, 6);
+    const r3 = a * c;
+    const r2 = a * d + b * c;
+    const r1 = a * e + b * d;
+    const r0 = b * e;
+    const bDisp = b > 0 ? ` + ${b}` : ` − ${Math.abs(b)}`;
+    const dDisp = d > 0 ? ` + ${d}x` : ` − ${Math.abs(d)}x`;
+    const eDisp = e > 0 ? ` + ${e}` : ` − ${Math.abs(e)}`;
+    const cStr = c === 1 ? '' : String(c);
+    // build answer: r3x³ + r2x² + r1x + r0
+    const buildPoly3 = (c3: number, c2: number, c1: number, c0: number) => {
+      let s = '';
+      const append = (coef: number, varStr: string) => {
+        if (coef === 0) return;
+        const abs = Math.abs(coef);
+        const absStr = abs === 1 && varStr !== '' ? '' : String(abs);
+        if (s === '') s += (coef < 0 ? '−' : '') + absStr + varStr;
+        else s += (coef < 0 ? ' − ' : ' + ') + absStr + varStr;
+      };
+      append(c3, 'x³'); append(c2, 'x²'); append(c1, 'x'); append(c0, '');
+      return s || '0';
+    };
+    return {
+      display: `(${a < 0 ? '−' : ''}${Math.abs(a) === 1 ? '' : Math.abs(a)}x${bDisp})(${cStr}x²${dDisp}${eDisp}) = %%BLANK%%`,
+      answer: buildPoly3(r3, r2, r1, r0),
+    };
+  },
+
+  'H1-03': (rng) => {
+    // 인수분해 심화: a>1인 이차식 ax² + bx + c = (px+q)(rx+s)
+    const type = rng.int(0, 2);
+    if (type === 0) {
+      // (ax + b)(cx + d), a·c 최대 6
+      const a = rng.int(1, 3), b = nonZeroInt(rng, -5, 5);
+      let c: number;
+      do { c = rng.int(1, 3); } while (a === 1 && c === 1);
+      const d = nonZeroInt(rng, -5, 5);
+      const A = a * c, B = a * d + b * c, C = b * d;
+      const bStr = b > 0 ? ` + ${b}` : ` − ${Math.abs(b)}`;
+      const dStr = d > 0 ? ` + ${d}` : ` − ${Math.abs(d)}`;
+      const aStr = a === 1 ? '' : String(a);
+      const cStr = c === 1 ? '' : String(c);
+      return {
+        display: `${poly2Str(A, B, C)} = %%BLANK%%`,
+        answer: `(${aStr}x${bStr})(${cStr}x${dStr})`,
+      };
+    } else if (type === 1) {
+      // 세제곱합차: a³ ± b³
+      const a = rng.int(1, 4), b = rng.int(1, 4);
+      const op = rng.int(0, 1) === 0 ? '+' : '−';
+      const aStr = a === 1 ? '' : String(a * a * a);
+      const bStr = b === 1 ? '' : String(b * b * b);
+      const signStr2 = op === '+' ? ' + ' : ' − ';
+      // factored form
+      const fA = a === 1 ? '' : String(a);
+      const fB = b === 1 ? '' : String(b);
+      const aa = a * a, ab = a * b, bb = b * b;
+      const sqTerm = aa === 1 ? 'x²' : `${aa}x²`;
+      const midTerm = ab === 0 ? '' : op === '+' ? ` − ${ab === 1 ? '' : ab}x` : ` + ${ab === 1 ? '' : ab}x`;
+      const consTerm = bb === 1 ? ' + 1' : ` + ${bb}`;
+      return {
+        display: `${a === 1 ? '' : aStr}x³${signStr2}${b === 1 ? String(b * b * b) : bStr} = %%BLANK%%`,
+        answer: `(${fA}x ${op} ${fB === '' ? '1' : fB})(${sqTerm}${midTerm}${consTerm})`,
+      };
+    } else {
+      // 치환 인수분해: (x²+ax)² + b(x²+ax) + c = (t+p)(t+q), t = x²+ax
+      const p = nonZeroInt(rng, -4, 4), q = nonZeroInt(rng, -4, 4);
+      const Bcoef = p + q, Ccoef = p * q;
+      const a = rng.int(1, 4);
+      const Bstr = Bcoef > 0 ? ` + ${Bcoef}` : Bcoef < 0 ? ` − ${Math.abs(Bcoef)}` : '';
+      const Cstr = Ccoef > 0 ? ` + ${Ccoef}` : Ccoef < 0 ? ` − ${Math.abs(Ccoef)}` : '';
+      const pStr = p > 0 ? ` + ${p}` : ` − ${Math.abs(p)}`;
+      const qStr = q > 0 ? ` + ${q}` : ` − ${Math.abs(q)}`;
+      const tStr = a === 1 ? 'x² + x' : `x² + ${a}x`;
+      return {
+        display: `(${tStr})²${Bstr}(${tStr})${Cstr} = %%BLANK%%`,
+        answer: `(${tStr}${pStr})(${tStr}${qStr})`,
+      };
+    }
+  },
+
+  'H1-04': (rng) => {
+    // 이차부등식: (x-r1)(x-r2) > 0 또는 < 0 (r1 < r2)
+    let r1: number, r2: number;
+    do {
+      r1 = rng.int(-6, 6); r2 = rng.int(-6, 6);
+    } while (r1 === r2);
+    if (r1 > r2) [r1, r2] = [r2, r1];
+    const bCoef = -(r1 + r2), cCoef = r1 * r2;
+    const bStr = bCoef > 0 ? ` + ${bCoef}x` : bCoef < 0 ? ` − ${Math.abs(bCoef)}x` : '';
+    const cStr = cCoef > 0 ? ` + ${cCoef}` : cCoef < 0 ? ` − ${Math.abs(cCoef)}` : '';
+    const gtOp = rng.int(0, 1) === 0 ? '>' : '<';
+    const r1Str = fmtN(r1), r2Str = fmtN(r2);
+    if (gtOp === '>') {
+      return {
+        display: `x²${bStr}${cStr} > 0,&nbsp; %%BLANK%%`,
+        answer: `x < ${r1Str} 또는 x > ${r2Str}`,
+      };
+    } else {
+      return {
+        display: `x²${bStr}${cStr} < 0,&nbsp; %%BLANK%%`,
+        answer: `${r1Str} < x < ${r2Str}`,
+      };
+    }
+  },
+
+  'H1-05': (rng) => {
+    // 이차함수 꼭짓점 공식: y = ax² + bx + c → y = a(x-h)² + k
+    const a = nonZeroInt(rng, -3, 3) < 0 ? rng.int(-3, -1) : rng.int(1, 3);
+    const h = nonZeroInt(rng, -5, 5); // vertex x
+    const k = nonZeroInt(rng, -9, 9); // vertex y
+    const b = -2 * a * h;
+    const c = a * h * h + k;
+    return {
+      display: `y = ${poly2Str(a, b, c)} 의 꼭짓점 (h, k) = %%BLANK%%`,
+      answer: `(${fmtN(h)}, ${fmtN(k)})`,
+    };
+  },
+
+  'H1-06': (rng) => {
+    // 절댓값 방정식·부등식: |ax + b| = c, |ax + b| < c, |ax + b| > c
+    const type = rng.int(0, 2);
+    const a = nonZeroInt(rng, -3, 3);
+    const b = rng.int(-8, 8);
+    const c = rng.int(1, 9);
+    const aStr = a === 1 ? 'x' : a === -1 ? '−x' : `${a}x`;
+    const bStr = b > 0 ? ` + ${b}` : b < 0 ? ` − ${Math.abs(b)}` : '';
+    // solutions: ax+b = c → x = (c-b)/a, ax+b = -c → x = (-c-b)/a
+    const sol1 = fracHTML(c - b, a);
+    const sol2 = fracHTML(-c - b, a);
+    const [lo, hi] = (c - b) / a < (-c - b) / a
+      ? [sol1, sol2]
+      : [sol2, sol1];
+    if (type === 0) {
+      return {
+        display: `|${aStr}${bStr}| = ${c},&nbsp; x = %%BLANK%%`,
+        answer: `${sol1} 또는 ${sol2}`,
+      };
+    } else if (type === 1) {
+      return {
+        display: `|${aStr}${bStr}| < ${c},&nbsp; %%BLANK%%`,
+        answer: `${lo} < x < ${hi}`,
+      };
+    } else {
+      return {
+        display: `|${aStr}${bStr}| > ${c},&nbsp; %%BLANK%%`,
+        answer: `x < ${lo} 또는 x > ${hi}`,
+      };
+    }
+  },
+
+  'H1-07': (rng) => {
+    // 나머지 정리: p(k) = ax² + bx + c에 x=k 대입
+    const a = nonZeroInt(rng, -3, 3);
+    const b = rng.int(-8, 8);
+    const c = rng.int(-9, 9);
+    const k = nonZeroInt(rng, -4, 4);
+    const result = a * k * k + b * k + c;
+    return {
+      display: `${poly2Str(a, b, c)}을 (x ${k > 0 ? '− ' + k : '+ ' + Math.abs(k)})으로 나눈 나머지 = %%BLANK%%`,
+      answer: fmtN(result),
+    };
+  },
+
+  'H1-08': (rng) => {
+    // 지수·로그 기초: log_a(b) = ?, a^x = b
+    const type = rng.int(0, 2);
+    const bases = [2, 3, 5, 10] as const;
+    if (type === 0) {
+      // log_a(a^n) = n
+      const base = bases[rng.int(0, 3)];
+      const n = rng.int(1, 5);
+      return {
+        display: `${K(`\\log_{${base}} ${base ** n}`)} = %%BLANK%%`,
+        answer: String(n),
+      };
+    } else if (type === 1) {
+      // log_a(b) + log_a(c) = log_a(bc), a는 고정
+      const base = bases[rng.int(0, 2)];
+      const m = rng.int(1, 4), n = rng.int(1, 4);
+      return {
+        display: `${K(`\\log_{${base}} ${base ** m} + \\log_{${base}} ${base ** n}`)} = %%BLANK%%`,
+        answer: String(m + n),
+      };
+    } else {
+      // a^x = b → x = log_a(b): 정수 지수
+      const base = bases[rng.int(0, 2)];
+      const n = rng.int(2, 5);
+      const val = base ** n;
+      return {
+        display: `${K(`${base}^x = ${val}`)},&nbsp; x = %%BLANK%%`,
+        answer: String(n),
+      };
+    }
   },
 
 };

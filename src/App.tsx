@@ -8,6 +8,7 @@ import ChapterSelector from './components/ChapterSelector';
 import PreviewSection from './components/PreviewSection';
 import PrintArea from './components/PrintArea';
 import AnswersPage from './components/AnswersPage';
+import RecentHistory, { HistoryEntry } from './components/RecentHistory';
 
 export interface Sheet {
   wid: string;
@@ -25,8 +26,25 @@ export default function App() {
   const [showAnswers, setShowAnswers] = useState(false);
   const [answersMode, setAnswersMode] = useState(false);
 
+  const [history, setHistory] = useState<HistoryEntry[]>(() => {
+    try { return JSON.parse(localStorage.getItem('math-wid-history') ?? '[]'); }
+    catch { return []; }
+  });
+
   const grade = GRADE_DATA.find(g => g.code === gradeCode) ?? GRADE_DATA[0];
   const chapter = grade.chapters[chapIdx] ?? grade.chapters[0];
+
+  // 새 문제 생성 시 최근 기록 저장
+  useEffect(() => {
+    if (sheets.length === 0) return;
+    const entry: HistoryEntry = { wid: sheets[0].wid, gradeCode, chapIdx, ts: Date.now() };
+    setHistory(prev => {
+      const updated = [entry, ...prev.filter(h => h.wid !== entry.wid)].slice(0, 8);
+      localStorage.setItem('math-wid-history', JSON.stringify(updated));
+      return updated;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sheets]);
 
   // 문제 생성 (explicit params → stale closure 없음)
   const generate = useCallback((gCode: string, chIdx: number, count: number, opts?: GeneratorOptions, scroll = false) => {
@@ -170,6 +188,16 @@ export default function App() {
               <StepLabel num={4} text="몇 장 출력할까요?" color={grade.color} />
               <SheetCountControl count={sheetCount} onChange={handleChangeCount} color={grade.color} />
             </section>
+
+            {history.length > 0 && (
+              <section className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-black text-slate-400 uppercase tracking-wider">최근 기록</span>
+                  <span className="flex-1 h-px bg-slate-200" />
+                </div>
+                <RecentHistory history={history} onNavigate={handleWidNavigate} />
+              </section>
+            )}
           </div>
 
           {/* 오른쪽: 프리뷰 (wide 화면에서 sticky) */}
