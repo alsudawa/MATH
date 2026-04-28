@@ -464,9 +464,18 @@ export const GENERATORS: Record<string, Generator> = {
   'E3-04': (rng) => {
     const an = rng.int(1, 6), ad = rng.int(2, 8);
     const bn = rng.int(1, 6), bd = rng.int(2, 8);
+    const prodN = an * bn, prodD = ad * bd;
+    const g = gcd(prodN, prodD);
+    const steps: SolutionStep[] = [
+      { explanation: '분자끼리, 분모끼리 곱하면', expression: `${fracHTMLRaw(an * bn, ad * bd)}` },
+    ];
+    if (g > 1) {
+      steps.push({ explanation: `${g}(으)로 약분하면`, expression: fracHTML(prodN, prodD) });
+    }
     return {
       display: `${fracHTMLRaw(an, ad)} × ${fracHTMLRaw(bn, bd)} = %%BLANK%%`,
-      answer: fracHTML(an * bn, ad * bd),
+      answer: fracHTML(prodN, prodD),
+      solution: steps,
     };
   },
 
@@ -831,7 +840,6 @@ export const GENERATORS: Record<string, Generator> = {
     // 일차방정식: ax + b = c (쉬움: a=1~3, 보통: a=1~8, 어려움: ax+b=cx+d)
     const d = opts?.difficulty ?? 2;
     if (d === 3) {
-      // 어려움: ax + b = cx + d 형태
       const a = rng.int(2, 7);
       let cCoef: number;
       do { cCoef = rng.int(1, 6); } while (cCoef === a);
@@ -840,9 +848,16 @@ export const GENERATORS: Record<string, Generator> = {
       const dVal = (a - cCoef) * x + bVal;
       const aStr = a === 1 ? 'x' : `${a}x`;
       const cStr = cCoef === 1 ? 'x' : `${cCoef}x`;
+      const diff = a - cCoef;
+      const rhs = dVal - bVal;
       return {
         display: `${aStr} ${signStr(bVal)} = ${cStr} ${signStr(dVal)},&nbsp; x = %%BLANK%%`,
         answer: fmtN(x),
+        solution: [
+          { explanation: 'x가 포함된 항을 왼쪽으로 이항', expression: `${aStr} − ${cStr} = ${fmtN(dVal)} ${signStr(-bVal)}` },
+          { explanation: '정리하면', expression: `${diff === 1 ? '' : diff === -1 ? '−' : String(diff)}x = ${fmtN(rhs)}` },
+          { explanation: '양변을 계수로 나누면', expression: `x = ${fmtN(x)}` },
+        ],
       };
     }
     const aMax = d === 1 ? 3 : 8;
@@ -855,6 +870,12 @@ export const GENERATORS: Record<string, Generator> = {
     return {
       display: `${aStr} ${signStr(b)} = ${fmtN(c)},&nbsp; x = %%BLANK%%`,
       answer: fmtN(x),
+      solution: [
+        { explanation: '상수항을 이항', expression: `${aStr} = ${fmtN(c)} ${signStr(-b)}` },
+        { explanation: '계산하면', expression: `${aStr} = ${fmtN(c - b)}` },
+        ...(Math.abs(a) !== 1 ? [{ explanation: `양변을 ${Math.abs(a)}(으)로 나누면`, expression: `x = ${fmtN(x)}` }] : []),
+        ...(a === -1 ? [{ explanation: '양변에 −1을 곱하면', expression: `x = ${fmtN(x)}` }] : []),
+      ],
     };
   },
 
@@ -1345,15 +1366,25 @@ export const GENERATORS: Record<string, Generator> = {
     const cCoef = r1 * r2;
     const bStr = bCoef > 0 ? ` + ${bCoef}x` : bCoef < 0 ? ` − ${Math.abs(bCoef)}x` : '';
     const cStr = cCoef > 0 ? ` + ${cCoef}` : cCoef < 0 ? ` − ${Math.abs(cCoef)}` : '';
+    const fmtFactor = (r: number) => r > 0 ? `(x − ${r})` : r < 0 ? `(x + ${Math.abs(r)})` : 'x';
+    const factored = `${fmtFactor(r1)}${fmtFactor(r2)} = 0`;
     if (r1 === r2) {
       return {
         display: `x²${bStr}${cStr} = 0,&nbsp; x = %%BLANK%%`,
         answer: fmtN(r1),
+        solution: [
+          { explanation: '인수분해하면', expression: factored },
+          { explanation: '중근', expression: `x = ${fmtN(r1)}` },
+        ],
       };
     }
     return {
       display: `x²${bStr}${cStr} = 0,&nbsp; x = %%BLANK%% 또는 x = %%BLANK%%`,
       answer: `${fmtN(r1)}, ${fmtN(r2)}`,
+      solution: [
+        { explanation: '인수분해하면', expression: factored },
+        { explanation: '각 인수가 0이 되는 값', expression: `x = ${fmtN(r1)} 또는 x = ${fmtN(r2)}` },
+      ],
     };
   },
   'M3-05': (rng) => {

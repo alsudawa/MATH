@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Sheet } from '../App';
-import { GradeGroup, Chapter, buildAnswerURL } from '../data';
+import { GradeGroup, Chapter, buildAnswerURL, buildURL } from '../data';
 import { renderDisplay, renderWithAnswer } from '../utils';
 
 declare const QRCode: new (el: HTMLElement, opts: object) => void;
@@ -26,6 +26,21 @@ export default function PreviewSection({
 }: Props) {
   const qrRef = useRef<HTMLDivElement>(null);
   const sheet = sheets[currentSheet];
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = useCallback(async () => {
+    const url = buildURL(sheet.wid, sheetCount);
+    const title = `${grade.fullLabel} ${chapterLabel || chapter.name}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text: `${title} 문제지 (${sheet.wid})`, url });
+        return;
+      } catch { /* user cancelled or not supported */ }
+    }
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [sheet.wid, sheetCount, grade.fullLabel, chapter.name, chapterLabel]);
 
   useEffect(() => {
     if (!qrRef.current) return;
@@ -82,6 +97,12 @@ export default function PreviewSection({
             className="px-3 py-1.5 rounded-lg border-2 border-slate-200 bg-white text-slate-600 font-bold text-sm hover:border-slate-300 transition-all"
           >
             {showAnswers ? '정답 숨기기' : '정답 보기'}
+          </button>
+          <button
+            onClick={handleShare}
+            className="px-3 py-1.5 rounded-lg border-2 border-slate-200 bg-white text-slate-600 font-bold text-sm hover:border-slate-300 transition-all"
+          >
+            {copied ? '복사됨!' : '공유'}
           </button>
           <button
             onClick={() => window.print()}

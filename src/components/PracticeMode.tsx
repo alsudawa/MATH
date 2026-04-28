@@ -82,6 +82,16 @@ function ProblemRow({
           </span>
         )}
       </span>
+      {submitted && result && !result.correct && problem.solution && problem.solution.length > 0 && (
+        <div className="w-full mt-1 ml-5 pl-3 border-l-2 border-slate-200">
+          {problem.solution.map((step, si) => (
+            <div key={si} className="text-[11px] text-slate-500 leading-relaxed">
+              <span className="text-slate-400">{step.explanation}: </span>
+              <span dangerouslySetInnerHTML={{ __html: step.expression }} />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
