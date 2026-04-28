@@ -21,7 +21,7 @@ interface Props {
 
 export default function GradeSelector({ selected, onSelect }: Props) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3" role="listbox" aria-label="학년 선택">
       {GRADE_DATA.map(g => {
         const active = g.code === selected;
         const grad = GRADIENTS[g.code] ?? 'from-gray-400 to-gray-600';
@@ -29,6 +29,9 @@ export default function GradeSelector({ selected, onSelect }: Props) {
           <button
             key={g.code}
             onClick={() => onSelect(g.code)}
+            role="option"
+            aria-selected={active}
+            aria-label={g.fullLabel}
             className={`
               relative flex flex-col items-center justify-center gap-3
               p-5 rounded-2xl border-3 font-sans cursor-pointer select-none

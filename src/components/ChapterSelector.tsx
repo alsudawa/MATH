@@ -16,6 +16,7 @@ export default function ChapterSelector({ chapters, selected, onSelect, color }:
           <button
             key={ch.id}
             onClick={() => onSelect(i)}
+            aria-pressed={active}
             className={`
               flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left
               transition-all duration-150 cursor-pointer w-full font-sans
@@ -26,7 +27,6 @@ export default function ChapterSelector({ chapters, selected, onSelect, color }:
             `}
             style={active ? { background: color, borderColor: color } : {}}
           >
-            {/* 번호 뱃지 */}
             <span
               className={`
                 w-8 h-8 rounded-lg flex items-center justify-center
@@ -37,12 +37,17 @@ export default function ChapterSelector({ chapters, selected, onSelect, color }:
               {ch.id}
             </span>
 
-            {/* 챕터명 */}
-            <span className={`text-sm font-semibold leading-snug ${active ? 'text-white' : ''}`}>
-              {ch.name}
-            </span>
+            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+              <span className={`text-sm font-semibold leading-snug ${active ? 'text-white' : ''}`}>
+                {ch.name}
+              </span>
+              {ch.prereqs && ch.prereqs.length > 0 && (
+                <span className={`text-[10px] ${active ? 'text-white/60' : 'text-slate-400'}`}>
+                  선수: {ch.prereqs.join(', ')}
+                </span>
+              )}
+            </div>
 
-            {/* 선택 체크 */}
             {active && (
               <span className="ml-auto text-white/80 text-lg flex-shrink-0">✓</span>
             )}

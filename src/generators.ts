@@ -495,9 +495,19 @@ export const GENERATORS: Record<string, Generator> = {
     // 분수 ÷ 분수 = 분수 × 역수
     const an = rng.int(1, 6), ad = rng.int(2, 8);
     const bn = rng.int(1, 6), bd = rng.int(2, 8);
+    const prodN = an * bd, prodD = ad * bn;
+    const g = gcd(prodN, prodD);
+    const steps: SolutionStep[] = [
+      { explanation: '역수를 곱하면', expression: `${fracHTMLRaw(an, ad)} × ${fracHTMLRaw(bd, bn)}` },
+      { explanation: '분자끼리, 분모끼리 곱하면', expression: fracHTMLRaw(prodN, prodD) },
+    ];
+    if (g > 1) {
+      steps.push({ explanation: `${g}(으)로 약분하면`, expression: fracHTML(prodN, prodD) });
+    }
     return {
       display: `${fracHTMLRaw(an, ad)} ÷ ${fracHTMLRaw(bn, bd)} = %%BLANK%%`,
-      answer: fracHTML(an * bd, ad * bn),
+      answer: fracHTML(prodN, prodD),
+      solution: steps,
     };
   },
 
@@ -1190,6 +1200,10 @@ export const GENERATORS: Record<string, Generator> = {
     return {
       display: `${r1}<br>${r2}<br>x = %%BLANK%%, &nbsp;y = %%BLANK%%`,
       answer: `x = ${ansX}, y = ${ansY}`,
+      solution: [
+        { explanation: '①×' + Math.abs(b2) + ', ②×' + Math.abs(b1) + '으로 y를 소거', expression: `x = ${ansX}` },
+        { explanation: 'x를 ①에 대입하면', expression: `y = ${ansY}` },
+      ],
     };
   },
 
