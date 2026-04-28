@@ -3,9 +3,11 @@ import { useState } from 'react';
 interface Props {
   gradeColor: string;
   onWidNavigate: (wid: string) => boolean;
+  onOpenWrongNotes: () => void;
+  wrongNotesCount: number;
 }
 
-export default function Header({ gradeColor, onWidNavigate }: Props) {
+export default function Header({ gradeColor, onWidNavigate, onOpenWrongNotes, wrongNotesCount }: Props) {
   const [wid, setWid] = useState('');
   const [error, setError] = useState(false);
 
@@ -29,6 +31,17 @@ export default function Header({ gradeColor, onWidNavigate }: Props) {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={onOpenWrongNotes}
+            className="bg-white/15 border-2 border-white/30 rounded-lg px-3 py-2 text-sm font-bold text-white hover:bg-white/25 transition-colors relative"
+          >
+            오답노트
+            {wrongNotesCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {wrongNotesCount > 99 ? '99+' : wrongNotesCount}
+              </span>
+            )}
+          </button>
           <input
             className="bg-white/15 border-2 border-white/30 rounded-lg px-3 py-2 text-sm font-mono tracking-widest uppercase placeholder-white/50 text-white w-40 focus:outline-none focus:border-white/80 transition-colors"
             placeholder="E2-03-X7K2M"

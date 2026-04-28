@@ -16,12 +16,13 @@ interface Props {
   chapter: Chapter;
   cols: number;
   sheetCount: number;
+  chapterLabel?: string;
 }
 
 export default function PreviewSection({
   sheets, currentSheet, onNavigate,
   showAnswers, onToggleAnswers, onStartPractice,
-  grade, chapter, cols, sheetCount,
+  grade, chapter, cols, sheetCount, chapterLabel,
 }: Props) {
   const qrRef = useRef<HTMLDivElement>(null);
   const sheet = sheets[currentSheet];
@@ -101,7 +102,7 @@ export default function PreviewSection({
         >
           <div>
             <div className="font-bold text-slate-700">{grade.fullLabel}</div>
-            <div className="text-sm text-slate-500 mt-0.5">{chapter.name}</div>
+            <div className="text-sm text-slate-500 mt-0.5">{chapterLabel || chapter.name}</div>
           </div>
           <div className="flex items-start gap-3">
             <div className="text-right text-xs text-slate-400 mt-1">

@@ -1,12 +1,15 @@
 import { useState, useCallback, useEffect } from 'react';
 import { GRADE_DATA, parseWid, buildWid, buildURL, colsForPerPage } from './data';
 import { newSeed, deriveSeeds } from './utils';
-import { generateProblems, Problem, GeneratorOptions } from './generators';
+import { getWrongEntriesCount } from './wrongNotes';
+import { generateProblems, generateMultiChapterProblems, Problem, GeneratorOptions } from './generators';
 import Header from './components/Header';
 import GradeSelector from './components/GradeSelector';
 import ChapterSelector from './components/ChapterSelector';
 import PreviewSection from './components/PreviewSection';
 import PracticeMode from './components/PracticeMode';
+import MultiChapterBuilder, { ChapterSelection } from './components/MultiChapterBuilder';
+import WrongNotes from './components/WrongNotes';
 import PrintArea from './components/PrintArea';
 import AnswersPage from './components/AnswersPage';
 
@@ -26,6 +29,10 @@ export default function App() {
   const [showAnswers, setShowAnswers] = useState(false);
   const [answersMode, setAnswersMode] = useState(false);
   const [practiceMode, setPracticeMode] = useState(false);
+  const [showMultiBuilder, setShowMultiBuilder] = useState(false);
+  const [showWrongNotes, setShowWrongNotes] = useState(false);
+  const [multiChapterLabel, setMultiChapterLabel] = useState('');
+  const [wrongNotesCount, setWrongNotesCount] = useState(() => getWrongEntriesCount());
 
   const grade = GRADE_DATA.find(g => g.code === gradeCode) ?? GRADE_DATA[0];
   const chapter = grade.chapters[chapIdx] ?? grade.chapters[0];
@@ -45,6 +52,7 @@ export default function App() {
     setCurrentSheet(0);
     setShowAnswers(false);
     setPracticeMode(false);
+    setMultiChapterLabel('');
     history.replaceState(null, '', buildURL(newSheets[0].wid, count));
     if (scroll) {
       setTimeout(() => {
@@ -129,6 +137,26 @@ export default function App() {
     return true;
   }, []);
 
+  const handleMultiGenerate = useCallback((selections: ChapterSelection[]) => {
+    const baseSeed = newSeed();
+    const problems = generateMultiChapterProblems(
+      selections.map(s => ({ gradeCode: s.gradeCode, chapId: s.chapId, count: s.count })),
+      baseSeed,
+      { difficulty },
+    );
+    const wid = buildWid('MX', '00', baseSeed);
+    const label = selections.map(s => s.chapName).join(' + ');
+    setMultiChapterLabel(label);
+    setSheets([{ wid, seed: baseSeed, problems }]);
+    setCurrentSheet(0);
+    setShowAnswers(false);
+    setPracticeMode(false);
+    setShowMultiBuilder(false);
+    setTimeout(() => {
+      document.getElementById('preview-section')?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+  }, [difficulty]);
+
   const cols = colsForPerPage(chapter.perPage);
 
   if (answersMode && sheets.length > 0) {
@@ -142,7 +170,12 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Header gradeColor={grade.color} onWidNavigate={handleWidNavigate} />
+      <Header
+        gradeColor={grade.color}
+        onWidNavigate={handleWidNavigate}
+        onOpenWrongNotes={() => setShowWrongNotes(true)}
+        wrongNotesCount={wrongNotesCount}
+      />
 
       <main className="max-w-7xl mx-auto px-4 py-10">
         <div className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-8 lg:items-start">
@@ -173,6 +206,14 @@ export default function App() {
               <StepLabel num={4} text="몇 장 출력할까요?" color={grade.color} />
               <SheetCountControl count={sheetCount} onChange={handleChangeCount} color={grade.color} />
             </section>
+
+            <button
+              onClick={() => setShowMultiBuilder(true)}
+              className="w-full py-3 rounded-xl border-2 border-dashed font-bold text-sm transition-all hover:border-solid"
+              style={{ borderColor: grade.color, color: grade.color }}
+            >
+              복합 단원 문제지 만들기
+            </button>
           </div>
 
           {/* 오른쪽: 프리뷰 또는 연습 모드 */}
@@ -184,7 +225,10 @@ export default function App() {
                   grade={grade}
                   chapter={chapter}
                   cols={cols}
-                  onExit={() => setPracticeMode(false)}
+                  onExit={() => {
+                    setPracticeMode(false);
+                    setWrongNotesCount(getWrongEntriesCount());
+                  }}
                 />
               ) : (
                 <PreviewSection
@@ -198,6 +242,7 @@ export default function App() {
                   chapter={chapter}
                   cols={cols}
                   sheetCount={sheetCount}
+                  chapterLabel={multiChapterLabel}
                 />
               )}
             </div>
@@ -207,6 +252,24 @@ export default function App() {
 
       {sheets.length > 0 && (
         <PrintArea sheets={sheets} grade={grade} chapter={chapter} cols={cols} />
+      )}
+
+      {showMultiBuilder && (
+        <MultiChapterBuilder
+          color={grade.color}
+          onGenerate={handleMultiGenerate}
+          onClose={() => setShowMultiBuilder(false)}
+        />
+      )}
+
+      {showWrongNotes && (
+        <WrongNotes
+          gradeColor={grade.color}
+          onClose={() => {
+            setShowWrongNotes(false);
+            setWrongNotesCount(getWrongEntriesCount());
+          }}
+        />
       )}
     </div>
   );

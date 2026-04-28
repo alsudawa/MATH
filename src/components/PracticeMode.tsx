@@ -3,6 +3,7 @@ import { Sheet } from '../App';
 import { GradeGroup, Chapter } from '../data';
 import { checkAnswer } from '../utils';
 import { Problem } from '../generators';
+import { addWrongEntries } from '../wrongNotes';
 
 interface Props {
   sheet: Sheet;
@@ -150,7 +151,22 @@ export default function PracticeMode({ sheet, grade, chapter, cols, onExit }: Pr
     });
     setResults(newResults);
     setSubmitted(true);
-  }, [sheet.problems, answers]);
+
+    const wrongIndices = newResults
+      .map((r, i) => (!r.correct ? i : -1))
+      .filter(i => i >= 0);
+    if (wrongIndices.length > 0) {
+      addWrongEntries(
+        sheet.wid,
+        grade.code,
+        chapter.id,
+        chapter.name,
+        sheet.problems,
+        wrongIndices,
+        answers,
+      );
+    }
+  }, [sheet, grade, chapter, answers]);
 
   const handleRetry = useCallback(() => {
     setAnswers(sheet.problems.map(p => {
