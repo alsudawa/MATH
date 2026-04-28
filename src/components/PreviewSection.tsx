@@ -15,12 +15,24 @@ interface Props {
   chapter: Chapter;
   cols: number;
   sheetCount: number;
+  elapsed: number;
+  timerRunning: boolean;
+  onTimerToggle: () => void;
+  onTimerReset: () => void;
+  onRegenerate: () => void;
+}
+
+function formatTime(s: number): string {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 }
 
 export default function PreviewSection({
   sheets, currentSheet, onNavigate,
   showAnswers, onToggleAnswers,
   grade, chapter, cols, sheetCount,
+  elapsed, timerRunning, onTimerToggle, onTimerReset, onRegenerate,
 }: Props) {
   const qrRef = useRef<HTMLDivElement>(null);
   const sheet = sheets[currentSheet];
@@ -64,10 +76,37 @@ export default function PreviewSection({
           </button>
         </div>
 
+        {/* 스톱워치 */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <span className="font-mono font-bold tabular-nums text-sm text-slate-600 min-w-[44px]">
+            {formatTime(elapsed)}
+          </span>
+          <button
+            onClick={onTimerToggle}
+            title={timerRunning ? '일시정지' : '재시작'}
+            className="w-7 h-7 rounded-full border-2 border-slate-200 bg-white flex items-center justify-center text-slate-500 hover:border-slate-400 transition-all text-xs"
+          >
+            {timerRunning ? '⏸' : '▶'}
+          </button>
+          <button
+            onClick={onTimerReset}
+            title="타이머 초기화"
+            className="w-7 h-7 rounded-full border-2 border-slate-200 bg-white flex items-center justify-center text-slate-500 hover:border-slate-400 transition-all text-xs"
+          >
+            ↺
+          </button>
+        </div>
+
         <div className="flex-1" />
 
         {/* 액션 */}
         <div className="flex gap-2 flex-shrink-0">
+          <button
+            onClick={onRegenerate}
+            className="px-3 py-1.5 rounded-lg border-2 border-slate-200 bg-white text-slate-600 font-bold text-sm hover:border-slate-300 transition-all"
+          >
+            새 문제
+          </button>
           <button
             onClick={onToggleAnswers}
             className="px-3 py-1.5 rounded-lg border-2 border-slate-200 bg-white text-slate-600 font-bold text-sm hover:border-slate-300 transition-all"

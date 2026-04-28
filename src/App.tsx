@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { GRADE_DATA, parseWid, buildWid, buildURL, colsForPerPage } from './data';
 import { newSeed, deriveSeeds } from './utils';
 import { generateProblems, Problem, GeneratorOptions } from './generators';
@@ -25,6 +25,13 @@ export default function App() {
   const [showAnswers, setShowAnswers] = useState(false);
   const [answersMode, setAnswersMode] = useState(false);
 
+  // 스톱워치
+  const [elapsed, setElapsed] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
+
   const grade = GRADE_DATA.find(g => g.code === gradeCode) ?? GRADE_DATA[0];
   const chapter = grade.chapters[chapIdx] ?? grade.chapters[0];
 
@@ -43,6 +50,11 @@ export default function App() {
     setCurrentSheet(0);
     setShowAnswers(false);
     history.replaceState(null, '', buildURL(newSheets[0].wid, count));
+    // 타이머 재시작
+    if (timerRef.current) clearInterval(timerRef.current);
+    setElapsed(0);
+    setTimerRunning(true);
+    timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
     if (scroll) {
       setTimeout(() => {
         document.getElementById('preview-section')?.scrollIntoView({ behavior: 'smooth' });
@@ -100,6 +112,28 @@ export default function App() {
     setDifficulty(d);
     generate(gradeCode, chapIdx, sheetCount, { difficulty: d });
   }, [gradeCode, chapIdx, sheetCount, generate]);
+
+  const handleTimerToggle = useCallback(() => {
+    if (timerRunning) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = null;
+      setTimerRunning(false);
+    } else {
+      timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
+      setTimerRunning(true);
+    }
+  }, [timerRunning]);
+
+  const handleTimerReset = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setElapsed(0);
+    setTimerRunning(true);
+    timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
+  }, []);
+
+  const handleRegenerate = useCallback(() => {
+    generate(gradeCode, chapIdx, sheetCount, { difficulty });
+  }, [gradeCode, chapIdx, sheetCount, difficulty, generate]);
 
   const handleWidNavigate = useCallback((wid: string): boolean => {
     const parsed = parseWid(wid);
@@ -185,6 +219,11 @@ export default function App() {
                 chapter={chapter}
                 cols={cols}
                 sheetCount={sheetCount}
+                elapsed={elapsed}
+                timerRunning={timerRunning}
+                onTimerToggle={handleTimerToggle}
+                onTimerReset={handleTimerReset}
+                onRegenerate={handleRegenerate}
               />
             </div>
           )}

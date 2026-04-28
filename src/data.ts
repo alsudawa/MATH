@@ -131,11 +131,26 @@ export const GRADE_DATA: GradeGroup[] = [
       { id: '09', name: '완전제곱식 변형', perPage: 8 },
     ],
   },
+  {
+    code: 'H1', label: '고1', fullLabel: '고등학교 1학년', color: '#2E7D32',
+    chapters: [
+      { id: '01', name: '다항식 덧셈과 뺄셈', perPage: 10 },
+      { id: '02', name: '다항식 곱셈 (전개)', perPage: 8 },
+      { id: '03', name: '나머지 정리', perPage: 10 },
+      { id: '04', name: '인수분해 (고급)', perPage: 10 },
+      { id: '05', name: '이차방정식 판별식', perPage: 10 },
+      { id: '06', name: '이차함수 꼭짓점', perPage: 10 },
+      { id: '07', name: '등차수열 일반항', perPage: 10 },
+      { id: '08', name: '등비수열 일반항', perPage: 10 },
+      { id: '09', name: '지수 법칙 (혼합)', perPage: 12 },
+      { id: '10', name: '로그 계산 기본', perPage: 12 },
+    ],
+  },
 ];
 
 // ==================== WID ====================
 
-const WID_REGEX = /^([EM][1-3])-(\d{2})-([0-9A-Z]{5})$/;
+const WID_REGEX = /^([EMH][1-3])-(\d{2})-([0-9A-Z]{5})$/;
 
 export function parseWid(wid: string): ParsedWid | null {
   const m = WID_REGEX.exec(wid.toUpperCase());

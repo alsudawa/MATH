@@ -80,6 +80,32 @@ function nonZeroInt(rng: SeededRandom, min: number, max: number): number {
   return v;
 }
 
+// ==================== POLYNOMIAL HELPERS ====================
+
+/** Build a LaTeX string for a polynomial with given coefficients (high power first).
+ *  e.g. polyLatex([2, -3, 1]) → '2x^{2} - 3x + 1' */
+function polyLatex(coeffs: number[], varName = 'x'): string {
+  const maxPow = coeffs.length - 1;
+  let latex = '';
+  let isFirst = true;
+  for (let i = 0; i < coeffs.length; i++) {
+    const c = coeffs[i];
+    const pow = maxPow - i;
+    if (c === 0) continue;
+    const absC = Math.abs(c);
+    const sign = c < 0 ? (isFirst ? '-' : ' - ') : (isFirst ? '' : ' + ');
+    let term = '';
+    if (pow === 0) term = String(absC);
+    else if (pow === 1) term = (absC === 1 ? '' : String(absC)) + varName;
+    else term = (absC === 1 ? '' : String(absC)) + `${varName}^{${pow}}`;
+    latex += sign + term;
+    isFirst = false;
+  }
+  return latex || '0';
+}
+
+function kQuad(a: number, b: number, c: number) { return K(polyLatex([a, b, c])); }
+
 // ==================== GENERATORS ====================
 
 export const GENERATORS: Record<string, Generator> = {
@@ -1461,6 +1487,223 @@ export const GENERATORS: Record<string, Generator> = {
     }
   },
 
+  // ===== H1 (고등학교 1학년) =====
+
+  'H1-01': (rng, opts) => {
+    // (ax² + bx + c) ± (dx² + ex + f)
+    const d = opts?.difficulty ?? 2;
+    const r = d === 1 ? 3 : d === 2 ? 5 : 8;
+    const a1 = nonZeroInt(rng, -r, r), b1 = rng.int(-r, r), c1 = rng.int(-r * 2, r * 2);
+    const a2 = nonZeroInt(rng, -r, r), b2 = rng.int(-r, r), c2 = rng.int(-r * 2, r * 2);
+    const op = rng.int(0, 1) === 0 ? '+' : '−';
+    const ra = op === '+' ? a1 + a2 : a1 - a2;
+    const rb = op === '+' ? b1 + b2 : b1 - b2;
+    const rc = op === '+' ? c1 + c2 : c1 - c2;
+    return {
+      display: `${kQuad(a1, b1, c1)} ${op} (${kQuad(a2, b2, c2)}) = %%BLANK%%`,
+      answer: ra === 0 && rb === 0 && rc === 0 ? K('0') : kQuad(ra, rb, rc),
+    };
+  },
+
+  'H1-02': (rng) => {
+    // (ax + b)(cx² + dx + e) = Ax³ + Bx² + Cx + D
+    const a = nonZeroInt(rng, -3, 3), b = nonZeroInt(rng, -4, 4);
+    const c = nonZeroInt(rng, -3, 3), d = rng.int(-3, 3), e = nonZeroInt(rng, -4, 4);
+    const A = a * c, B = a * d + b * c, C = a * e + b * d, D = b * e;
+    return {
+      display: `(${K(polyLatex([a, b]))})(${K(polyLatex([c, d, e]))}) = %%BLANK%%`,
+      answer: K(polyLatex([A, B, C, D])),
+    };
+  },
+
+  'H1-03': (rng) => {
+    // 나머지 정리: f(x) = ax² + bx + c, f(k) = ?
+    const a = nonZeroInt(rng, -3, 3), b = rng.int(-5, 5), c = rng.int(-8, 8);
+    const k = nonZeroInt(rng, -3, 3);
+    const remainder = a * k * k + b * k + c;
+    const divisor = k > 0 ? K(`x - ${k}`) : K(`x + ${Math.abs(k)}`);
+    return {
+      display: `f(x) = ${kQuad(a, b, c)}를 ${divisor}로 나눈 나머지 = %%BLANK%%`,
+      answer: fmtN(remainder),
+    };
+  },
+
+  'H1-04': (rng, opts) => {
+    // 이차 인수분해 (음수 근 포함)
+    const d = opts?.difficulty ?? 2;
+    const type = d === 1 ? 0 : rng.int(0, 2);
+    if (type === 0) {
+      // x² + (p+q)x + pq = (x+p)(x+q), p,q > 0
+      const p = rng.int(1, 8), q = rng.int(1, 8);
+      return {
+        display: `${kQuad(1, p + q, p * q)} = %%BLANK%%`,
+        answer: `(x + ${p})(x + ${q})`,
+      };
+    } else if (type === 1) {
+      // x² − (p+q)x + pq = (x−p)(x−q), p,q > 0
+      const p = rng.int(1, 8), q = rng.int(1, 8);
+      return {
+        display: `${kQuad(1, -(p + q), p * q)} = %%BLANK%%`,
+        answer: `(x − ${p})(x − ${q})`,
+      };
+    } else {
+      // x² + (p−q)x − pq = (x+p)(x−q), p > q
+      const q = rng.int(1, 6), p = rng.int(q + 1, q + 6);
+      return {
+        display: `${kQuad(1, p - q, -(p * q))} = %%BLANK%%`,
+        answer: `(x + ${p})(x − ${q})`,
+      };
+    }
+  },
+
+  'H1-05': (rng, opts) => {
+    // 이차방정식 판별식 D = b² − 4ac
+    const diff = opts?.difficulty ?? 2;
+    const a = rng.int(1, diff === 1 ? 2 : 4);
+    const b = nonZeroInt(rng, -8, 8);
+    const c = nonZeroInt(rng, -6, 6);
+    const D = b * b - 4 * a * c;
+    if (rng.int(0, 1) === 0) {
+      return {
+        display: `${kQuad(a, b, c)} = 0 의 판별식 D = %%BLANK%%`,
+        answer: fmtN(D),
+      };
+    } else {
+      const roots = D > 0 ? '2개' : D === 0 ? '1개 (중근)' : '실근 없음';
+      return {
+        display: `${kQuad(a, b, c)} = 0 의 실근의 개수 = %%BLANK%%`,
+        answer: roots,
+      };
+    }
+  },
+
+  'H1-06': (rng) => {
+    // 이차함수 꼭짓점: 표준형 ↔ 일반형
+    const a = nonZeroInt(rng, -3, 3);
+    const h = nonZeroInt(rng, -5, 5);
+    const k = nonZeroInt(rng, -8, 8);
+    if (rng.int(0, 1) === 0) {
+      // 표준형 y = a(x−h)² + k → 꼭짓점
+      const hStr = h > 0 ? ` - ${h}` : ` + ${Math.abs(h)}`;
+      const kStr = k > 0 ? ` + ${k}` : k < 0 ? ` - ${Math.abs(k)}` : '';
+      const aStr = a === 1 ? '' : a === -1 ? '-' : String(a);
+      return {
+        display: `y = ${aStr}(x${hStr})²${kStr} 의 꼭짓점 = %%BLANK%%`,
+        answer: `(${fmtN(h)}, ${fmtN(k)})`,
+      };
+    } else {
+      // 일반형 y = ax² + bx + c → 꼭짓점, b = -2ah, c = k + ah²
+      const b = -2 * a * h, c = k + a * h * h;
+      return {
+        display: `y = ${kQuad(a, b, c)} 의 꼭짓점 = %%BLANK%%`,
+        answer: `(${fmtN(h)}, ${fmtN(k)})`,
+      };
+    }
+  },
+
+  'H1-07': (rng, opts) => {
+    // 등차수열 일반항
+    const d = opts?.difficulty ?? 2;
+    const a1 = nonZeroInt(rng, -6, 6);
+    const diff = d === 1 ? rng.int(1, 5) : nonZeroInt(rng, -5, 5);
+    const n = rng.int(3, d === 1 ? 6 : 10);
+    if (rng.int(0, 1) === 0) {
+      const an = a1 + (n - 1) * diff;
+      return {
+        display: `첫째항 ${fmtN(a1)}, 공차 ${fmtN(diff)}인 등차수열의 제${n}항 = %%BLANK%%`,
+        answer: fmtN(an),
+      };
+    } else {
+      const diff2 = d === 1 ? rng.int(1, 4) : nonZeroInt(rng, -4, 4);
+      const n2 = rng.int(3, d === 1 ? 6 : 10);
+      const an2 = a1 + (n2 - 1) * diff2;
+      return {
+        display: `첫째항 ${fmtN(a1)}, 제${n2}항이 ${fmtN(an2)}인 등차수열의 공차 = %%BLANK%%`,
+        answer: fmtN(diff2),
+      };
+    }
+  },
+
+  'H1-08': (rng) => {
+    // 등비수열 일반항
+    const a1 = rng.int(1, 4);
+    const r = rng.int(0, 1) === 0 ? rng.int(2, 4) : -rng.int(2, 3);
+    const n = rng.int(2, 5);
+    if (rng.int(0, 1) === 0) {
+      const an = a1 * Math.pow(r, n - 1);
+      return {
+        display: `첫째항 ${fmtN(a1)}, 공비 ${fmtN(r)}인 등비수열의 제${n}항 = %%BLANK%%`,
+        answer: fmtN(an),
+      };
+    } else {
+      const r2 = rng.int(0, 1) === 0 ? rng.int(2, 3) : -rng.int(2, 3);
+      const n2 = rng.int(2, 4);
+      const an2 = a1 * Math.pow(r2, n2 - 1);
+      return {
+        display: `첫째항 ${fmtN(a1)}, 제${n2}항이 ${fmtN(an2)}인 등비수열의 공비 = %%BLANK%%`,
+        answer: fmtN(r2),
+      };
+    }
+  },
+
+  'H1-09': (rng) => {
+    const type = rng.int(0, 3);
+    if (type === 0) {
+      const base = rng.int(2, 5), m = rng.int(1, 4), n = rng.int(1, 4);
+      return {
+        display: `${K(`${base}^{${m}} \\times ${base}^{${n}}`)} = %%BLANK%%`,
+        answer: K(`${base}^{${m + n}}`),
+      };
+    } else if (type === 1) {
+      const base = rng.int(2, 4), m = rng.int(2, 4), n = rng.int(2, 3);
+      return {
+        display: `${K(`(${base}^{${m}})^{${n}}`)} = %%BLANK%%`,
+        answer: K(`${base}^{${m * n}}`),
+      };
+    } else if (type === 2) {
+      const base = rng.int(2, 5), sub = rng.int(1, 3), m = sub + rng.int(1, 3);
+      return {
+        display: `${K(`${base}^{${m}} \\div ${base}^{${sub}}`)} = %%BLANK%%`,
+        answer: K(`${base}^{${m - sub}}`),
+      };
+    } else {
+      const base = rng.int(2, 4), m = rng.int(2, 4), n = rng.int(1, 3), p = rng.int(1, m + n - 1);
+      return {
+        display: `${K(`${base}^{${m}} \\times ${base}^{${n}} \\div ${base}^{${p}}`)} = %%BLANK%%`,
+        answer: K(`${base}^{${m + n - p}}`),
+      };
+    }
+  },
+
+  'H1-10': (rng) => {
+    const type = rng.int(0, 3);
+    if (type === 0) {
+      const a = rng.int(2, 5), n = rng.int(2, 6);
+      return {
+        display: `${K(`\\log_{${a}} ${a}^{${n}}`)} = %%BLANK%%`,
+        answer: String(n),
+      };
+    } else if (type === 1) {
+      const a = rng.int(2, 4), m = rng.int(2, 6), n = rng.int(2, 6);
+      return {
+        display: `${K(`\\log_{${a}} ${m} + \\log_{${a}} ${n}`)} = %%BLANK%%`,
+        answer: K(`\\log_{${a}} ${m * n}`),
+      };
+    } else if (type === 2) {
+      const a = rng.int(2, 4), n = rng.int(2, 5), k = rng.int(2, 4);
+      return {
+        display: `${K(`\\log_{${a}} ${n * k} - \\log_{${a}} ${n}`)} = %%BLANK%%`,
+        answer: K(`\\log_{${a}} ${k}`),
+      };
+    } else {
+      const a = rng.int(2, 4), m = rng.int(2, 5), n = rng.int(2, 4);
+      return {
+        display: `${K(`${n} \\log_{${a}} ${m}`)} = %%BLANK%%`,
+        answer: K(`\\log_{${a}} ${Math.pow(m, n)}`),
+      };
+    }
+  },
+
   'M3-09': (rng) => {
     // 완전제곱식 변형: x² + bx + c → (x + p)² + q
     const p = nonZeroInt(rng, -6, 6); // (x+p)²
@@ -1471,7 +1714,7 @@ export const GENERATORS: Record<string, Generator> = {
     const pStr = p > 0 ? ` + ${p}` : ` − ${Math.abs(p)}`;
     const qStr = q > 0 ? ` + ${q}` : q < 0 ? ` − ${Math.abs(q)}` : '';
     return {
-      display: `x²${bStr}${cStr}을 완전제곱식으로&nbsp; (x${pStr})²${qStr} = %%BLANK%%`,
+      display: `x²${bStr}${cStr} 를 완전제곱식으로 변형하면 %%BLANK%%`,
       answer: `(x${pStr})²${qStr}`,
     };
   },
