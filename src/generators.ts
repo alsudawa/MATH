@@ -1381,7 +1381,7 @@ export const GENERATORS: Record<string, Generator> = {
     do { r1 = rng.int(-8, 8); r2 = rng.int(-8, 8); } while (r1 === 0 && r2 === 0);
     const bCoef = -(r1 + r2);
     const cCoef = r1 * r2;
-    const bStr = bCoef > 0 ? ` + ${bCoef}x` : bCoef < 0 ? ` − ${Math.abs(bCoef)}x` : '';
+    const bStr = bCoef === 1 ? ' + x' : bCoef === -1 ? ' − x' : bCoef > 0 ? ` + ${bCoef}x` : bCoef < 0 ? ` − ${Math.abs(bCoef)}x` : '';
     const cStr = cCoef > 0 ? ` + ${cCoef}` : cCoef < 0 ? ` − ${Math.abs(cCoef)}` : '';
     const fmtFactor = (r: number) => r > 0 ? `(x − ${r})` : r < 0 ? `(x + ${Math.abs(r)})` : 'x';
     const factored = `${fmtFactor(r1)}${fmtFactor(r2)} = 0`;
@@ -1479,7 +1479,7 @@ export const GENERATORS: Record<string, Generator> = {
     do { r1 = nonZeroInt(rng, -6, 6); r2 = nonZeroInt(rng, -6, 6); } while (r1 === r2);
     const b = -(r1 + r2) * a;
     const c = r1 * r2 * a;
-    const bStr = b > 0 ? ` + ${b}x` : b < 0 ? ` − ${Math.abs(b)}x` : '';
+    const bStr = b === 1 ? ' + x' : b === -1 ? ' − x' : b > 0 ? ` + ${b}x` : b < 0 ? ` − ${Math.abs(b)}x` : '';
     const cStr = c > 0 ? ` + ${c}` : c < 0 ? ` − ${Math.abs(c)}` : '';
     const aStr = a === 1 ? '' : String(a);
     return {
@@ -1493,7 +1493,7 @@ export const GENERATORS: Record<string, Generator> = {
     const r1 = nonZeroInt(rng, -8, 8), r2 = nonZeroInt(rng, -8, 8);
     const sumR = r1 + r2, prodR = r1 * r2;
     const bCoef = -sumR, cCoef = prodR;
-    const bStr = bCoef > 0 ? ` + ${bCoef}x` : bCoef < 0 ? ` − ${Math.abs(bCoef)}x` : '';
+    const bStr = bCoef === 1 ? ' + x' : bCoef === -1 ? ' − x' : bCoef > 0 ? ` + ${bCoef}x` : bCoef < 0 ? ` − ${Math.abs(bCoef)}x` : '';
     const cStr = cCoef > 0 ? ` + ${cCoef}` : cCoef < 0 ? ` − ${Math.abs(cCoef)}` : '';
     const type = rng.int(0, 1);
     if (type === 0) {
