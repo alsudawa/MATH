@@ -1239,13 +1239,16 @@ export const GENERATORS: Record<string, Generator> = {
     const a = rng.int(1, 4), b = nonZeroInt(rng, -6, 6);
     const c = rng.int(1, 4), d = nonZeroInt(rng, -6, 6);
     const A = a * c, B = a * d + b * c, C = b * d;
-    const bStr = B > 0 ? ` + ${B}x` : B < 0 ? ` − ${Math.abs(B)}x` : '';
-    const cStr = C > 0 ? ` + ${C}` : C < 0 ? ` − ${Math.abs(C)}` : '';
+    const AStr = A === 1 ? 'x²' : `${A}x²`;
+    const BStr = B === 0 ? '' : B === 1 ? ' + x' : B === -1 ? ' − x' : B > 0 ? ` + ${B}x` : ` − ${Math.abs(B)}x`;
+    const CStr = C > 0 ? ` + ${C}` : C < 0 ? ` − ${Math.abs(C)}` : '';
+    const aDisp = a === 1 ? 'x' : `${a}x`;
+    const cDisp = c === 1 ? 'x' : `${c}x`;
     const bDisp = b > 0 ? ` + ${b}` : ` − ${Math.abs(b)}`;
     const dDisp = d > 0 ? ` + ${d}` : ` − ${Math.abs(d)}`;
     return {
-      display: `(${a}x${bDisp})(${c}x${dDisp}) = %%BLANK%%`,
-      answer: `${A}x²${bStr}${cStr}`,
+      display: `(${aDisp}${bDisp})(${cDisp}${dDisp}) = %%BLANK%%`,
+      answer: `${AStr}${BStr}${CStr}`,
     };
   },
 
