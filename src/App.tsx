@@ -23,6 +23,7 @@ export default function App() {
   const [sheets, setSheets] = useState<Sheet[]>([]);
   const [currentSheet, setCurrentSheet] = useState(0);
   const [showAnswers, setShowAnswers] = useState(false);
+  const [showSolution, setShowSolution] = useState(false);
   const [answersMode, setAnswersMode] = useState(false);
 
   const grade = GRADE_DATA.find(g => g.code === gradeCode) ?? GRADE_DATA[0];
@@ -100,6 +101,10 @@ export default function App() {
     setDifficulty(d);
     generate(gradeCode, chapIdx, sheetCount, { difficulty: d });
   }, [gradeCode, chapIdx, sheetCount, generate]);
+
+  const handleRegenerate = useCallback(() => {
+    generate(gradeCode, chapIdx, sheetCount, { difficulty }, true);
+  }, [gradeCode, chapIdx, sheetCount, difficulty, generate]);
 
   const handleWidNavigate = useCallback((wid: string): boolean => {
     const parsed = parseWid(wid);
@@ -181,6 +186,9 @@ export default function App() {
                 onNavigate={setCurrentSheet}
                 showAnswers={showAnswers}
                 onToggleAnswers={() => setShowAnswers(v => !v)}
+                showSolution={showSolution}
+                onToggleSolution={() => setShowSolution(v => !v)}
+                onRegenerate={handleRegenerate}
                 grade={grade}
                 chapter={chapter}
                 cols={cols}

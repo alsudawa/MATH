@@ -80,6 +80,27 @@ function nonZeroInt(rng: SeededRandom, min: number, max: number): number {
   return v;
 }
 
+/** Render ax² + bx + c as plain-text HTML (no KaTeX needed for degree ≤ 2) */
+function p2(a: number, b: number, c: number): string {
+  const parts: string[] = [];
+  if (a !== 0) parts.push(a === 1 ? 'x²' : a === -1 ? '−x²' : `${fmtN(a)}x²`);
+  if (b !== 0) {
+    if (parts.length === 0) parts.push(b === 1 ? 'x' : b === -1 ? '−x' : `${fmtN(b)}x`);
+    else parts.push(b === 1 ? '+ x' : b === -1 ? '− x' : b > 0 ? `+ ${b}x` : `− ${Math.abs(b)}x`);
+  }
+  if (c !== 0) {
+    if (parts.length === 0) parts.push(fmtN(c));
+    else parts.push(c > 0 ? `+ ${c}` : `− ${Math.abs(c)}`);
+  }
+  return parts.length === 0 ? '0' : parts.join(' ');
+}
+
+/** Render (x − r) factor string, e.g. r=3 → "(x − 3)", r=−2 → "(x + 2)" */
+function xFactor(r: number): string {
+  if (r === 0) return 'x';
+  return r > 0 ? `(x − ${r})` : `(x + ${Math.abs(r)})`;
+}
+
 // ==================== GENERATORS ====================
 
 export const GENERATORS: Record<string, Generator> = {
@@ -840,9 +861,16 @@ export const GENERATORS: Record<string, Generator> = {
       const dVal = (a - cCoef) * x + bVal;
       const aStr = a === 1 ? 'x' : `${a}x`;
       const cStr = cCoef === 1 ? 'x' : `${cCoef}x`;
+      const diffCoef = a - cCoef;
+      const diffConst = dVal - bVal;
+      const diffCoefStr = diffCoef === 1 ? 'x' : diffCoef === -1 ? '−x' : `${fmtN(diffCoef)}x`;
       return {
         display: `${aStr} ${signStr(bVal)} = ${cStr} ${signStr(dVal)},&nbsp; x = %%BLANK%%`,
         answer: fmtN(x),
+        solution: [
+          { explanation: '동류항 이항', expression: `${diffCoefStr} = ${fmtN(diffConst)}` },
+          { explanation: '계수로 나누기', expression: `x = ${fmtN(x)}` },
+        ],
       };
     }
     const aMax = d === 1 ? 3 : 8;
@@ -855,6 +883,10 @@ export const GENERATORS: Record<string, Generator> = {
     return {
       display: `${aStr} ${signStr(b)} = ${fmtN(c)},&nbsp; x = %%BLANK%%`,
       answer: fmtN(x),
+      solution: [
+        { explanation: '상수항 이항', expression: `${aStr} = ${fmtN(c - b)}` },
+        { explanation: '계수로 나누기', expression: `x = ${fmtN(x)}` },
+      ],
     };
   },
 
@@ -1349,11 +1381,19 @@ export const GENERATORS: Record<string, Generator> = {
       return {
         display: `x²${bStr}${cStr} = 0,&nbsp; x = %%BLANK%%`,
         answer: fmtN(r1),
+        solution: [
+          { explanation: '인수분해', expression: `${xFactor(r1)}² = 0` },
+          { explanation: '해', expression: `x = ${fmtN(r1)}` },
+        ],
       };
     }
     return {
       display: `x²${bStr}${cStr} = 0,&nbsp; x = %%BLANK%% 또는 x = %%BLANK%%`,
       answer: `${fmtN(r1)}, ${fmtN(r2)}`,
+      solution: [
+        { explanation: '인수분해', expression: `${xFactor(r1)}${xFactor(r2)} = 0` },
+        { explanation: '해', expression: `x = ${fmtN(r1)} 또는 x = ${fmtN(r2)}` },
+      ],
     };
   },
   'M3-05': (rng) => {
@@ -1473,6 +1513,129 @@ export const GENERATORS: Record<string, Generator> = {
     return {
       display: `x²${bStr}${cStr}을 완전제곱식으로&nbsp; (x${pStr})²${qStr} = %%BLANK%%`,
       answer: `(x${pStr})²${qStr}`,
+    };
+  },
+
+  // ===== H1 (고등학교 1학년) =====
+
+  'H1-01': (rng) => {
+    // 다항식의 덧셈/뺄셈: (ax² + bx + c) ± (dx² + ex + f)
+    const a = nonZeroInt(rng, -3, 3), b = nonZeroInt(rng, -5, 5), c = nonZeroInt(rng, -8, 8);
+    const d = nonZeroInt(rng, -3, 3), e = nonZeroInt(rng, -5, 5), f = nonZeroInt(rng, -8, 8);
+    const op = rng.int(0, 1) === 0 ? '+' : '−';
+    const [rA, rB, rC] = op === '+' ? [a + d, b + e, c + f] : [a - d, b - e, c - f];
+    return {
+      display: `(${p2(a, b, c)}) ${op} (${p2(d, e, f)}) = %%BLANK%%`,
+      answer: p2(rA, rB, rC),
+    };
+  },
+
+  'H1-02': (rng) => {
+    // 나머지 정리: P(x) = ax² + bx + c를 (x − k)로 나눈 나머지 = P(k)
+    const a = nonZeroInt(rng, -3, 3), b = nonZeroInt(rng, -5, 5), c = rng.int(-9, 9);
+    const k = nonZeroInt(rng, -4, 4);
+    const remainder = a * k * k + b * k + c;
+    const divisorStr = k > 0 ? `x − ${k}` : `x + ${Math.abs(k)}`;
+    return {
+      display: `P(x) = ${p2(a, b, c)} 일 때, (${divisorStr})로 나눈 나머지 = %%BLANK%%`,
+      answer: fmtN(remainder),
+      solution: [
+        { explanation: '나머지 정리', expression: `P(${fmtN(k)}) = ${fmtN(a)}·${fmtN(k)}² ${signStr(b)}·${fmtN(k)} ${signStr(c, false)}` },
+        { explanation: '계산', expression: `= ${fmtN(remainder)}` },
+      ],
+    };
+  },
+
+  'H1-03': (rng) => {
+    // 고차방정식: (x−r1)(x−r2)(x−r3) = 0 전개
+    const r1 = nonZeroInt(rng, -4, 4);
+    const r2 = nonZeroInt(rng, -4, 4);
+    const r3 = nonZeroInt(rng, -4, 4);
+    const sumR = r1 + r2 + r3;
+    const sumPairs = r1 * r2 + r1 * r3 + r2 * r3;
+    const prod = r1 * r2 * r3;
+    const b = -sumR, c = sumPairs, d = -prod;
+    const bStr = b === 0 ? '' : b > 0 ? ` + ${b}x²` : ` − ${Math.abs(b)}x²`;
+    const cStr = c === 0 ? '' : c > 0 ? ` + ${c}x` : ` − ${Math.abs(c)}x`;
+    const dStr = d === 0 ? '' : d > 0 ? ` + ${d}` : ` − ${Math.abs(d)}`;
+    const roots = [...new Set([r1, r2, r3])].sort((x, y) => x - y);
+    return {
+      display: `x³${bStr}${cStr}${dStr} = 0,&nbsp; x = %%BLANK%%`,
+      answer: roots.map(fmtN).join(', '),
+      solution: [
+        { explanation: '인수분해', expression: `${xFactor(r1)}${xFactor(r2)}${xFactor(r3)} = 0` },
+        { explanation: '해', expression: roots.map(r => `x = ${fmtN(r)}`).join(', ') },
+      ],
+    };
+  },
+
+  'H1-04': (rng) => {
+    // 절댓값 방정식/부등식: |x + b| op c (a=1로 정수해 보장)
+    const b = nonZeroInt(rng, -6, 6);
+    const c = rng.int(1, 8);
+    const bStr = b > 0 ? ` + ${b}` : ` − ${Math.abs(b)}`;
+    const type = rng.int(0, 2);
+    if (type === 0) {
+      return {
+        display: `|x${bStr}| = ${c},&nbsp; x = %%BLANK%%`,
+        answer: `${fmtN(c - b)} 또는 ${fmtN(-c - b)}`,
+        solution: [
+          { explanation: '절댓값 정의', expression: `x${bStr} = ${c} 또는 x${bStr} = −${c}` },
+          { explanation: '해', expression: `x = ${fmtN(c - b)} 또는 x = ${fmtN(-c - b)}` },
+        ],
+      };
+    } else if (type === 1) {
+      return {
+        display: `|x${bStr}| < ${c}&nbsp; → %%BLANK%%`,
+        answer: `${fmtN(-c - b)} < x < ${fmtN(c - b)}`,
+        solution: [
+          { explanation: '부등식 변환', expression: `−${c} < x${bStr} < ${c}` },
+          { explanation: '해', expression: `${fmtN(-c - b)} < x < ${fmtN(c - b)}` },
+        ],
+      };
+    } else {
+      return {
+        display: `|x${bStr}| ≥ ${c}&nbsp; → %%BLANK%%`,
+        answer: `x ≤ ${fmtN(-c - b)} 또는 x ≥ ${fmtN(c - b)}`,
+        solution: [
+          { explanation: '부등식 변환', expression: `x${bStr} ≤ −${c} 또는 x${bStr} ≥ ${c}` },
+          { explanation: '해', expression: `x ≤ ${fmtN(-c - b)} 또는 x ≥ ${fmtN(c - b)}` },
+        ],
+      };
+    }
+  },
+
+  'H1-05': (rng) => {
+    // 순열: nPr = n!/(n−r)!
+    const n = rng.int(4, 9);
+    const r = rng.int(1, Math.min(n - 1, 4));
+    let val = 1;
+    for (let i = n; i > n - r; i--) val *= i;
+    const factors = Array.from({ length: r }, (_, i) => n - i).join(' × ');
+    return {
+      display: `${n}P${r} = %%BLANK%%`,
+      answer: String(val),
+      solution: [
+        { explanation: '공식', expression: `${n}P${r} = ${factors}` },
+        { explanation: '계산', expression: `= ${val}` },
+      ],
+    };
+  },
+
+  'H1-06': (rng) => {
+    // 조합: nCr = n! / (r!(n−r)!)
+    const n = rng.int(4, 10);
+    const r = rng.int(1, Math.min(n - 1, 4));
+    let num = 1, den = 1;
+    for (let i = 0; i < r; i++) { num *= (n - i); den *= (i + 1); }
+    const val = num / den;
+    return {
+      display: `${n}C${r} = %%BLANK%%`,
+      answer: String(val),
+      solution: [
+        { explanation: '공식', expression: `${n}C${r} = ${n}P${r} ÷ ${r}!` },
+        { explanation: '계산', expression: `= ${val}` },
+      ],
     };
   },
 

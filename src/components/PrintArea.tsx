@@ -32,7 +32,7 @@ export default function PrintArea({ sheets, grade, chapter, cols }: Props) {
             <div className="print-header-left">
               <h2>수학 연산 연습</h2>
               <p>{grade.fullLabel} · {chapter.name}</p>
-              <p className="print-info-line">날짜: _________________&nbsp;&nbsp; 이름: _________________</p>
+              <p className="print-info-line">날짜: _________________&nbsp;&nbsp; 이름: _________________&nbsp;&nbsp; 점수: _______/{sheet.problems.length}</p>
             </div>
             <div className="print-qr-block">
               <div id={`pqr-${si}`} />

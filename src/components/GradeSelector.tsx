@@ -1,7 +1,7 @@
 import { GRADE_DATA } from '../data';
 
 const EMOJI: Record<string, string> = {
-  E1: '🌱', E2: '📐', E3: '🔢', M1: '📊', M2: '📈', M3: '🔬',
+  E1: '🌱', E2: '📐', E3: '🔢', M1: '📊', M2: '📈', M3: '🔬', H1: '🎓',
 };
 
 // 각 학년별 그라디언트
@@ -12,6 +12,7 @@ const GRADIENTS: Record<string, string> = {
   M1: 'from-blue-500 to-indigo-600',
   M2: 'from-emerald-400 to-teal-600',
   M3: 'from-rose-400 to-red-600',
+  H1: 'from-green-700 to-green-900',
 };
 
 interface Props {
@@ -21,7 +22,7 @@ interface Props {
 
 export default function GradeSelector({ selected, onSelect }: Props) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
       {GRADE_DATA.map(g => {
         const active = g.code === selected;
         const grad = GRADIENTS[g.code] ?? 'from-gray-400 to-gray-600';

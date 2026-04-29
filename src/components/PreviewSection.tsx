@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Sheet } from '../App';
-import { GradeGroup, Chapter, buildAnswerURL } from '../data';
+import { GradeGroup, Chapter, buildAnswerURL, buildURL } from '../data';
 import { renderDisplay, renderWithAnswer } from '../utils';
 
 declare const QRCode: new (el: HTMLElement, opts: object) => void;
@@ -11,6 +11,9 @@ interface Props {
   onNavigate: (i: number) => void;
   showAnswers: boolean;
   onToggleAnswers: () => void;
+  showSolution: boolean;
+  onToggleSolution: () => void;
+  onRegenerate: () => void;
   grade: GradeGroup;
   chapter: Chapter;
   cols: number;
@@ -20,10 +23,13 @@ interface Props {
 export default function PreviewSection({
   sheets, currentSheet, onNavigate,
   showAnswers, onToggleAnswers,
+  showSolution, onToggleSolution,
+  onRegenerate,
   grade, chapter, cols, sheetCount,
 }: Props) {
   const qrRef = useRef<HTMLDivElement>(null);
   const sheet = sheets[currentSheet];
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!qrRef.current) return;
@@ -35,6 +41,14 @@ export default function PreviewSection({
     });
   }, [sheet.wid]);
 
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(buildURL(sheet.wid, sheetCount)).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const hasSolution = sheet.problems.some(p => p.solution && p.solution.length > 0);
   const gridCls = `grid gap-0 ${cols === 2 ? 'grid-cols-2' : cols === 3 ? 'grid-cols-3' : 'grid-cols-4'}`;
 
   return (
@@ -66,14 +80,54 @@ export default function PreviewSection({
 
         <div className="flex-1" />
 
-        {/* 액션 */}
-        <div className="flex gap-2 flex-shrink-0">
+        {/* 액션 버튼 */}
+        <div className="flex gap-2 flex-shrink-0 flex-wrap">
+          {/* 재생성 */}
+          <button
+            onClick={onRegenerate}
+            title="같은 챕터에서 새 문제 생성"
+            className="px-3 py-1.5 rounded-lg border-2 border-slate-200 bg-white text-slate-600 font-bold text-sm hover:border-slate-300 transition-all flex items-center gap-1"
+          >
+            🔄 새 문제
+          </button>
+
+          {/* 링크 복사 */}
+          <button
+            onClick={handleCopyLink}
+            title="현재 문제지 링크 복사"
+            className={`px-3 py-1.5 rounded-lg border-2 font-bold text-sm transition-all flex items-center gap-1
+              ${copied
+                ? 'border-green-400 bg-green-50 text-green-700'
+                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+              }`}
+          >
+            {copied ? '✓ 복사됨' : '🔗 링크 복사'}
+          </button>
+
+          {/* 정답 보기 */}
           <button
             onClick={onToggleAnswers}
             className="px-3 py-1.5 rounded-lg border-2 border-slate-200 bg-white text-slate-600 font-bold text-sm hover:border-slate-300 transition-all"
           >
             {showAnswers ? '정답 숨기기' : '정답 보기'}
           </button>
+
+          {/* 풀이 단계 (풀이 있는 챕터에서만 표시) */}
+          {hasSolution && showAnswers && (
+            <button
+              onClick={onToggleSolution}
+              className={`px-3 py-1.5 rounded-lg border-2 font-bold text-sm transition-all
+                ${showSolution
+                  ? 'border-transparent text-white'
+                  : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                }`}
+              style={showSolution ? { background: grade.color, borderColor: grade.color } : {}}
+            >
+              풀이 단계
+            </button>
+          )}
+
+          {/* 인쇄 */}
           <button
             onClick={() => window.print()}
             className="px-3 py-1.5 rounded-lg text-white font-bold text-sm transition-all hover:opacity-90"
@@ -128,6 +182,17 @@ export default function PreviewSection({
                     : renderDisplay(p.display, false),
                 }}
               />
+              {/* 풀이 단계 */}
+              {showAnswers && showSolution && p.solution && p.solution.length > 0 && (
+                <div className="mt-1 ml-4 border-l-2 pl-2" style={{ borderColor: `color-mix(in srgb, ${grade.color} 30%, transparent)` }}>
+                  {p.solution.map((step, si) => (
+                    <div key={si} className="text-[11px] leading-snug text-slate-500 flex gap-1">
+                      <span className="text-slate-300 flex-shrink-0">{step.explanation}:</span>
+                      <span dangerouslySetInnerHTML={{ __html: step.expression }} />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>
