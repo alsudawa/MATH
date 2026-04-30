@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { GRADE_DATA, parseWid, buildWid, buildURL, colsForPerPage } from './data';
 import { newSeed, deriveSeeds } from './utils';
 import { generateProblems, Problem, GeneratorOptions } from './generators';
+import { useBookmarks } from './hooks/useBookmarks';
 import Header from './components/Header';
 import GradeSelector from './components/GradeSelector';
 import ChapterSelector from './components/ChapterSelector';
@@ -25,10 +26,11 @@ export default function App() {
   const [showAnswers, setShowAnswers] = useState(false);
   const [answersMode, setAnswersMode] = useState(false);
 
+  const { bookmarks, toggle: toggleBookmark, isBookmarked } = useBookmarks();
+
   const grade = GRADE_DATA.find(g => g.code === gradeCode) ?? GRADE_DATA[0];
   const chapter = grade.chapters[chapIdx] ?? grade.chapters[0];
 
-  // 문제 생성 (explicit params → stale closure 없음)
   const generate = useCallback((gCode: string, chIdx: number, count: number, opts?: GeneratorOptions, scroll = false) => {
     const g = GRADE_DATA.find(x => x.code === gCode) ?? GRADE_DATA[0];
     const ch = g.chapters[chIdx] ?? g.chapters[0];
@@ -101,6 +103,10 @@ export default function App() {
     generate(gradeCode, chapIdx, sheetCount, { difficulty: d });
   }, [gradeCode, chapIdx, sheetCount, generate]);
 
+  const handleRegenerate = useCallback(() => {
+    generate(gradeCode, chapIdx, sheetCount, { difficulty });
+  }, [gradeCode, chapIdx, sheetCount, difficulty, generate]);
+
   const handleWidNavigate = useCallback((wid: string): boolean => {
     const parsed = parseWid(wid);
     if (!parsed) return false;
@@ -126,6 +132,17 @@ export default function App() {
     return true;
   }, []);
 
+  const currentWid = sheets[currentSheet]?.wid ?? '';
+  const bookmarkLabel = `${grade.fullLabel} · ${chapter.name}`;
+
+  const handleBookmark = useCallback(() => {
+    if (currentWid) toggleBookmark(currentWid, bookmarkLabel);
+  }, [currentWid, bookmarkLabel, toggleBookmark]);
+
+  const handleRemoveBookmark = useCallback((wid: string) => {
+    toggleBookmark(wid, '');
+  }, [toggleBookmark]);
+
   const cols = colsForPerPage(chapter.perPage);
 
   if (answersMode && sheets.length > 0) {
@@ -139,7 +156,12 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Header gradeColor={grade.color} onWidNavigate={handleWidNavigate} />
+      <Header
+        gradeColor={grade.color}
+        onWidNavigate={handleWidNavigate}
+        bookmarks={bookmarks}
+        onRemoveBookmark={handleRemoveBookmark}
+      />
 
       <main className="max-w-7xl mx-auto px-4 py-10">
         <div className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-8 lg:items-start">
@@ -185,6 +207,9 @@ export default function App() {
                 chapter={chapter}
                 cols={cols}
                 sheetCount={sheetCount}
+                onRegenerate={handleRegenerate}
+                isBookmarked={isBookmarked(currentWid)}
+                onBookmark={handleBookmark}
               />
             </div>
           )}

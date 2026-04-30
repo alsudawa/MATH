@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Sheet } from '../App';
 import { GradeGroup, Chapter, buildAnswerURL } from '../data';
 import { renderDisplay, renderWithAnswer } from '../utils';
@@ -15,16 +15,46 @@ interface Props {
   chapter: Chapter;
   cols: number;
   sheetCount: number;
+  onRegenerate: () => void;
+  isBookmarked: boolean;
+  onBookmark: () => void;
+}
+
+function formatTime(s: number): string {
+  const m = Math.floor(s / 60);
+  return `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 
 export default function PreviewSection({
   sheets, currentSheet, onNavigate,
   showAnswers, onToggleAnswers,
   grade, chapter, cols, sheetCount,
+  onRegenerate, isBookmarked, onBookmark,
 }: Props) {
   const qrRef = useRef<HTMLDivElement>(null);
   const sheet = sheets[currentSheet];
 
+  // ── 타이머 ──
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const sheetsKeyRef = useRef('');
+
+  useEffect(() => {
+    const key = sheets.map(s => s.wid).join(',');
+    if (key !== sheetsKeyRef.current) {
+      sheetsKeyRef.current = key;
+      setIsTimerRunning(false);
+      setElapsed(0);
+    }
+  }, [sheets]);
+
+  useEffect(() => {
+    if (!isTimerRunning) return;
+    const id = setInterval(() => setElapsed(s => s + 1), 1000);
+    return () => clearInterval(id);
+  }, [isTimerRunning]);
+
+  // ── QR 코드 ──
   useEffect(() => {
     if (!qrRef.current) return;
     qrRef.current.innerHTML = '';
@@ -41,6 +71,7 @@ export default function PreviewSection({
     <section className="flex flex-col gap-4">
       {/* 툴바 */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 px-5 py-3 flex items-center gap-3 flex-wrap">
+
         {/* 페이지 내비 */}
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
@@ -64,10 +95,55 @@ export default function PreviewSection({
           </button>
         </div>
 
+        {/* 타이머 */}
+        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 flex-shrink-0">
+          <span className="text-slate-400 text-xs select-none">⏱</span>
+          <span
+            className="font-mono font-bold text-sm tabular-nums w-[46px] text-center"
+            style={{ color: elapsed > 0 ? '#334155' : '#94a3b8' }}
+          >
+            {formatTime(elapsed)}
+          </span>
+          <button
+            onClick={() => setIsTimerRunning(v => !v)}
+            className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-[11px] hover:border-slate-400 transition-all"
+            title={isTimerRunning ? '일시정지' : '시작'}
+          >
+            {isTimerRunning ? '⏸' : '▶'}
+          </button>
+          <button
+            onClick={() => { setIsTimerRunning(false); setElapsed(0); }}
+            className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-[11px] hover:border-slate-400 transition-all"
+            title="리셋"
+          >
+            ↺
+          </button>
+        </div>
+
         <div className="flex-1" />
 
         {/* 액션 */}
-        <div className="flex gap-2 flex-shrink-0">
+        <div className="flex gap-2 flex-shrink-0 items-center">
+          {/* 즐겨찾기 */}
+          <button
+            onClick={onBookmark}
+            title={isBookmarked ? '즐겨찾기 해제' : '즐겨찾기에 추가'}
+            className="w-8 h-8 rounded-lg border-2 border-slate-200 bg-white flex items-center justify-center text-base hover:border-slate-300 transition-all"
+            style={isBookmarked ? { borderColor: '#f59e0b', color: '#f59e0b' } : { color: '#94a3b8' }}
+          >
+            {isBookmarked ? '★' : '☆'}
+          </button>
+
+          {/* 재생성 */}
+          <button
+            onClick={onRegenerate}
+            title="같은 설정으로 새 문제 만들기"
+            className="px-3 py-1.5 rounded-lg border-2 border-slate-200 bg-white text-slate-600 font-bold text-sm hover:border-slate-300 transition-all flex items-center gap-1"
+          >
+            <span className="text-base leading-none">↻</span>
+            <span>새 문제</span>
+          </button>
+
           <button
             onClick={onToggleAnswers}
             className="px-3 py-1.5 rounded-lg border-2 border-slate-200 bg-white text-slate-600 font-bold text-sm hover:border-slate-300 transition-all"
