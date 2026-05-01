@@ -327,8 +327,8 @@ export const GENERATORS: Record<string, Generator> = {
     const r = rng.int(1, b - 1);
     const a = b * q + r;
     return {
-      display: `${a} ÷ ${b} = %%BLANK%% 나머지 %%BLANK%%`,
-      answer: `몫 ${q}, 나머지 ${r}`,
+      display: `${a} ÷ ${b} = %%BLANK%% … %%BLANK%%`,
+      answer: `${q}, ${r}`,
     };
   },
 
@@ -1463,15 +1463,15 @@ export const GENERATORS: Record<string, Generator> = {
 
   'M3-09': (rng) => {
     // 완전제곱식 변형: x² + bx + c → (x + p)² + q
-    const p = nonZeroInt(rng, -6, 6); // (x+p)²
-    const q = nonZeroInt(rng, -9, 9); // constant shift
+    const p = nonZeroInt(rng, -6, 6);
+    const q = nonZeroInt(rng, -9, 9);
     const b = 2 * p, c = p * p + q;
     const bStr = b > 0 ? ` + ${b}x` : ` − ${Math.abs(b)}x`;
     const cStr = c > 0 ? ` + ${c}` : c < 0 ? ` − ${Math.abs(c)}` : '';
     const pStr = p > 0 ? ` + ${p}` : ` − ${Math.abs(p)}`;
     const qStr = q > 0 ? ` + ${q}` : q < 0 ? ` − ${Math.abs(q)}` : '';
     return {
-      display: `x²${bStr}${cStr}을 완전제곱식으로&nbsp; (x${pStr})²${qStr} = %%BLANK%%`,
+      display: `x²${bStr}${cStr} 를 완전제곱식으로 변형하면 %%BLANK%%`,
       answer: `(x${pStr})²${qStr}`,
     };
   },

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Sheet } from '../App';
 import { GradeGroup, Chapter, buildAnswerURL } from '../data';
 import { renderDisplay, renderWithAnswer } from '../utils';
@@ -15,12 +15,61 @@ interface Props {
   chapter: Chapter;
   cols: number;
   sheetCount: number;
+  onRegenerate: () => void;
+  onPrevChapter: (() => void) | null;
+  onNextChapter: (() => void) | null;
+}
+
+function Timer() {
+  const [running, setRunning] = useState(false);
+  const [time, setTime] = useState(0);
+  const intervalRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (running) {
+      intervalRef.current = window.setInterval(() => setTime(t => t + 1), 1000);
+    } else {
+      if (intervalRef.current !== null) clearInterval(intervalRef.current);
+    }
+    return () => { if (intervalRef.current !== null) clearInterval(intervalRef.current); };
+  }, [running]);
+
+  const reset = () => { setRunning(false); setTime(0); };
+
+  const fmt = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
+      <span className="font-mono text-sm font-bold text-slate-700 w-12 text-center select-none tabular-nums">
+        {fmt(time)}
+      </span>
+      <button
+        onClick={() => setRunning(r => !r)}
+        title={running ? '일시정지' : '시작'}
+        className="w-6 h-6 rounded flex items-center justify-center bg-slate-200 hover:bg-slate-300 text-slate-600 text-xs font-bold transition-colors"
+      >
+        {running ? '⏸' : '▶'}
+      </button>
+      <button
+        onClick={reset}
+        title="초기화"
+        className="w-6 h-6 rounded flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-400 text-xs font-bold transition-colors"
+      >
+        ↺
+      </button>
+    </div>
+  );
 }
 
 export default function PreviewSection({
   sheets, currentSheet, onNavigate,
   showAnswers, onToggleAnswers,
   grade, chapter, cols, sheetCount,
+  onRegenerate, onPrevChapter, onNextChapter,
 }: Props) {
   const qrRef = useRef<HTMLDivElement>(null);
   const sheet = sheets[currentSheet];
@@ -64,10 +113,42 @@ export default function PreviewSection({
           </button>
         </div>
 
+        {/* 챕터 이동 */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button
+            onClick={() => onPrevChapter?.()}
+            disabled={!onPrevChapter}
+            title="이전 챕터"
+            className="h-7 px-2 rounded-lg border border-slate-200 bg-white text-slate-500 text-xs font-bold
+              hover:border-slate-300 hover:bg-slate-50 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            ← 이전
+          </button>
+          <button
+            onClick={() => onNextChapter?.()}
+            disabled={!onNextChapter}
+            title="다음 챕터"
+            className="h-7 px-2 rounded-lg border border-slate-200 bg-white text-slate-500 text-xs font-bold
+              hover:border-slate-300 hover:bg-slate-50 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            다음 →
+          </button>
+        </div>
+
         <div className="flex-1" />
+
+        {/* 타이머 */}
+        <Timer />
 
         {/* 액션 */}
         <div className="flex gap-2 flex-shrink-0">
+          <button
+            onClick={onRegenerate}
+            title="같은 조건으로 새 문제 생성"
+            className="px-3 py-1.5 rounded-lg border-2 border-slate-200 bg-white text-slate-600 font-bold text-sm hover:border-slate-300 hover:bg-slate-50 transition-all"
+          >
+            🔄 다시
+          </button>
           <button
             onClick={onToggleAnswers}
             className="px-3 py-1.5 rounded-lg border-2 border-slate-200 bg-white text-slate-600 font-bold text-sm hover:border-slate-300 transition-all"

@@ -8,6 +8,7 @@ import ChapterSelector from './components/ChapterSelector';
 import PreviewSection from './components/PreviewSection';
 import PrintArea from './components/PrintArea';
 import AnswersPage from './components/AnswersPage';
+import RecentSheets, { saveRecent, RecentEntry } from './components/RecentSheets';
 
 export interface Sheet {
   wid: string;
@@ -24,6 +25,7 @@ export default function App() {
   const [currentSheet, setCurrentSheet] = useState(0);
   const [showAnswers, setShowAnswers] = useState(false);
   const [answersMode, setAnswersMode] = useState(false);
+  const [recentRefreshKey, setRecentRefreshKey] = useState(0);
 
   const grade = GRADE_DATA.find(g => g.code === gradeCode) ?? GRADE_DATA[0];
   const chapter = grade.chapters[chapIdx] ?? grade.chapters[0];
@@ -43,6 +45,17 @@ export default function App() {
     setCurrentSheet(0);
     setShowAnswers(false);
     history.replaceState(null, '', buildURL(newSheets[0].wid, count));
+
+    const entry: RecentEntry = {
+      wid: newSheets[0].wid,
+      n: count,
+      gradeLabel: g.fullLabel,
+      chapterName: ch.name,
+      ts: Date.now(),
+    };
+    saveRecent(entry);
+    setRecentRefreshKey(k => k + 1);
+
     if (scroll) {
       setTimeout(() => {
         document.getElementById('preview-section')?.scrollIntoView({ behavior: 'smooth' });
@@ -101,6 +114,25 @@ export default function App() {
     generate(gradeCode, chapIdx, sheetCount, { difficulty: d });
   }, [gradeCode, chapIdx, sheetCount, generate]);
 
+  const handleRegenerate = useCallback(() => {
+    generate(gradeCode, chapIdx, sheetCount, { difficulty });
+  }, [gradeCode, chapIdx, sheetCount, difficulty, generate]);
+
+  const handlePrevChapter = useCallback(() => {
+    if (chapIdx <= 0) return;
+    const next = chapIdx - 1;
+    setChapIdx(next);
+    generate(gradeCode, next, sheetCount, { difficulty });
+  }, [gradeCode, chapIdx, sheetCount, difficulty, generate]);
+
+  const handleNextChapter = useCallback(() => {
+    const g = GRADE_DATA.find(x => x.code === gradeCode) ?? GRADE_DATA[0];
+    if (chapIdx >= g.chapters.length - 1) return;
+    const next = chapIdx + 1;
+    setChapIdx(next);
+    generate(gradeCode, next, sheetCount, { difficulty });
+  }, [gradeCode, chapIdx, sheetCount, difficulty, generate]);
+
   const handleWidNavigate = useCallback((wid: string): boolean => {
     const parsed = parseWid(wid);
     if (!parsed) return false;
@@ -127,6 +159,10 @@ export default function App() {
   }, []);
 
   const cols = colsForPerPage(chapter.perPage);
+
+  const currentGrade = GRADE_DATA.find(g => g.code === gradeCode) ?? GRADE_DATA[0];
+  const hasPrevChapter = chapIdx > 0;
+  const hasNextChapter = chapIdx < currentGrade.chapters.length - 1;
 
   if (answersMode && sheets.length > 0) {
     return (
@@ -170,6 +206,9 @@ export default function App() {
               <StepLabel num={4} text="몇 장 출력할까요?" color={grade.color} />
               <SheetCountControl count={sheetCount} onChange={handleChangeCount} color={grade.color} />
             </section>
+
+            {/* 최근 문제지 */}
+            <RecentSheets onNavigate={handleWidNavigate} refreshKey={recentRefreshKey} />
           </div>
 
           {/* 오른쪽: 프리뷰 (wide 화면에서 sticky) */}
@@ -185,6 +224,9 @@ export default function App() {
                 chapter={chapter}
                 cols={cols}
                 sheetCount={sheetCount}
+                onRegenerate={handleRegenerate}
+                onPrevChapter={hasPrevChapter ? handlePrevChapter : null}
+                onNextChapter={hasNextChapter ? handleNextChapter : null}
               />
             </div>
           )}
