@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Sheet } from '../App';
 import { GradeGroup, Chapter, buildAnswerURL } from '../data';
 import { renderDisplay, renderWithAnswer } from '../utils';
@@ -24,6 +24,14 @@ export default function PreviewSection({
 }: Props) {
   const qrRef = useRef<HTMLDivElement>(null);
   const sheet = sheets[currentSheet];
+  const [copied, setCopied] = useState(false);
+
+  function handleCopyURL() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   useEffect(() => {
     if (!qrRef.current) return;
@@ -67,12 +75,18 @@ export default function PreviewSection({
         <div className="flex-1" />
 
         {/* 액션 */}
-        <div className="flex gap-2 flex-shrink-0">
+        <div className="flex gap-2 flex-shrink-0 flex-wrap">
           <button
             onClick={onToggleAnswers}
             className="px-3 py-1.5 rounded-lg border-2 border-slate-200 bg-white text-slate-600 font-bold text-sm hover:border-slate-300 transition-all"
           >
             {showAnswers ? '정답 숨기기' : '정답 보기'}
+          </button>
+          <button
+            onClick={handleCopyURL}
+            className="px-3 py-1.5 rounded-lg border-2 border-slate-200 bg-white text-slate-600 font-bold text-sm hover:border-slate-300 transition-all"
+          >
+            {copied ? '✅ 복사됨' : '🔗 링크 복사'}
           </button>
           <button
             onClick={() => window.print()}

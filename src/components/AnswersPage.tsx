@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Sheet } from '../App';
 import { GradeGroup, Chapter, colsForPerPage } from '../data';
 import { renderWithAnswer } from '../utils';
@@ -6,6 +7,50 @@ interface Props {
   sheets: Sheet[];
   grade: GradeGroup;
   chapter: Chapter;
+}
+
+import { Problem } from '../generators';
+
+function ProblemCell({ index, problem, color }: { index: number; problem: Problem; color: string }) {
+  const [showSolution, setShowSolution] = useState(false);
+  const hasSolution = problem.solution && problem.solution.length > 0;
+
+  return (
+    <div className="px-3 py-2 border-b border-slate-50 text-[13px] leading-loose">
+      <span className="text-slate-300 text-[11px] font-bold mr-1">{index + 1}.</span>
+      <span dangerouslySetInnerHTML={{ __html: renderWithAnswer(problem.display, problem.answer, color) }} />
+      {hasSolution && (
+        <div className="mt-1">
+          <button
+            onClick={() => setShowSolution(v => !v)}
+            className="text-[11px] font-bold px-2 py-0.5 rounded-full border transition-all"
+            style={showSolution
+              ? { borderColor: color, color, background: `color-mix(in srgb, ${color} 8%, white)` }
+              : { borderColor: '#e2e8f0', color: '#94a3b8', background: 'white' }
+            }
+          >
+            {showSolution ? '풀이 접기 ▲' : '풀이 보기 ▼'}
+          </button>
+          {showSolution && (
+            <div
+              className="mt-1.5 rounded-lg p-2 text-[11px] flex flex-col gap-1"
+              style={{ background: `color-mix(in srgb, ${color} 5%, white)`, borderLeft: `3px solid ${color}` }}
+            >
+              {problem.solution!.map((step, si) => (
+                <div key={si} className="flex flex-col gap-0.5">
+                  <span className="text-slate-500">{step.explanation}</span>
+                  <span
+                    className="font-mono text-slate-700"
+                    dangerouslySetInnerHTML={{ __html: step.expression }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function AnswersPage({ sheets, grade, chapter }: Props) {
@@ -79,13 +124,7 @@ export default function AnswersPage({ sheets, grade, chapter }: Props) {
             {/* 문제+정답 격자 */}
             <div className={`${gridCls} p-2`}>
               {sheet.problems.map((p, i) => (
-                <div
-                  key={i}
-                  className="px-3 py-2 border-b border-slate-50 text-[13px] leading-loose"
-                >
-                  <span className="text-slate-300 text-[11px] font-bold mr-1">{i + 1}.</span>
-                  <span dangerouslySetInnerHTML={{ __html: renderWithAnswer(p.display, p.answer, grade.color) }} />
-                </div>
+                <ProblemCell key={i} index={i} problem={p} color={grade.color} />
               ))}
             </div>
           </div>

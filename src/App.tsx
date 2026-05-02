@@ -170,6 +170,17 @@ export default function App() {
               <StepLabel num={4} text="몇 장 출력할까요?" color={grade.color} />
               <SheetCountControl count={sheetCount} onChange={handleChangeCount} color={grade.color} />
             </section>
+
+            <section className="flex flex-col gap-5">
+              <StepLabel num={5} text="새 문제 생성" color={grade.color} />
+              <button
+                onClick={() => generate(gradeCode, chapIdx, sheetCount, { difficulty }, true)}
+                className="w-full py-3 rounded-xl font-black text-base text-white shadow-md hover:opacity-90 active:scale-95 transition-all"
+                style={{ background: grade.color }}
+              >
+                🔀 다른 문제 생성하기
+              </button>
+            </section>
           </div>
 
           {/* 오른쪽: 프리뷰 (wide 화면에서 sticky) */}

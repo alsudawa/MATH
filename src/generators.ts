@@ -1476,6 +1476,403 @@ export const GENERATORS: Record<string, Generator> = {
     };
   },
 
+  // ===== H1 (고등학교 1학년) =====
+
+  'H1-01': (rng) => {
+    // 나머지 정리: f(x) = ax³ + bx² + cx + d를 (x − k)로 나눈 나머지 = f(k)
+    const k = nonZeroInt(rng, -3, 3);
+    const a = nonZeroInt(rng, -3, 3);
+    const b = nonZeroInt(rng, -4, 4);
+    const c = nonZeroInt(rng, -5, 5);
+    const d = nonZeroInt(rng, -9, 9);
+    const remainder = a * k * k * k + b * k * k + c * k + d;
+    const aStr = a === 1 ? '' : a === -1 ? '−' : `${a}`;
+    const bStr = b > 0 ? ` + ${b}x²` : b < 0 ? ` − ${Math.abs(b)}x²` : '';
+    const cStr = c > 0 ? ` + ${c}x` : c < 0 ? ` − ${Math.abs(c)}x` : '';
+    const dStr = d > 0 ? ` + ${d}` : ` − ${Math.abs(d)}`;
+    const kSign = k < 0 ? ` + ${Math.abs(k)}` : ` − ${k}`;
+    return {
+      display: `f(x) = ${aStr}x³${bStr}${cStr}${dStr}을 (x${kSign})로 나눈 나머지 = %%BLANK%%`,
+      answer: fmtN(remainder),
+      solution: [
+        { explanation: '나머지 정리: (x − k)로 나눈 나머지는 f(k)', expression: `f(${fmtN(k)}) = ${fmtN(remainder)}` },
+      ],
+    };
+  },
+
+  'H1-02': (rng) => {
+    // 고급 인수분해: a³ ± b³ = (a ± b)(a² ∓ ab + b²)
+    const type = rng.int(0, 2);
+    if (type === 0) {
+      // a³ + b³
+      const a = rng.int(1, 4), b = rng.int(1, 4);
+      const cube = a * a * a + b * b * b;
+      return {
+        display: `${fmtN(cube)} = %%BLANK%%`,
+        answer: `(${a} + ${b})(${a}² − ${a}·${b} + ${b}²) = (${a} + ${b})(${a * a - a * b + b * b})`,
+      };
+    } else if (type === 1) {
+      // a³ − b³
+      const a = rng.int(2, 5), b = rng.int(1, a - 1);
+      const cube = a * a * a - b * b * b;
+      return {
+        display: `${fmtN(cube)} = %%BLANK%%`,
+        answer: `(${a} − ${b})(${a}² + ${a}·${b} + ${b}²) = (${a} − ${b})(${a * a + a * b + b * b})`,
+      };
+    } else {
+      // x³ + px² + qx + r 형태 (그룹 인수분해)
+      const a = rng.int(1, 4), b = nonZeroInt(rng, -4, 4);
+      // (x + a)²(x + b) 전개
+      const A = 2 * a + b;
+      const B = a * a + 2 * a * b;
+      const C = a * a * b;
+      const Bstr = B > 0 ? ` + ${B}x` : ` − ${Math.abs(B)}x`;
+      const Cstr = C > 0 ? ` + ${C}` : ` − ${Math.abs(C)}`;
+      const bSign = b > 0 ? ` + ${b}` : ` − ${Math.abs(b)}`;
+      return {
+        display: `x³ + ${A}x²${Bstr}${Cstr} = %%BLANK%%`,
+        answer: `(x + ${a})²(x${bSign})`,
+      };
+    }
+  },
+
+  'H1-03': (rng, opts) => {
+    // 이차방정식: 판별식 D = b² − 4ac 계산, 근의 종류 판별 또는 근 구하기
+    const d = opts?.difficulty ?? 2;
+    if (d === 1) {
+      // 판별식 값만 구하기
+      const a = rng.int(1, 4);
+      const b = nonZeroInt(rng, -6, 6);
+      const c = nonZeroInt(rng, -5, 5);
+      const disc = b * b - 4 * a * c;
+      return {
+        display: `${a}x² ${signStr(b)}x ${signStr(c)} = 0의 판별식 D = %%BLANK%%`,
+        answer: fmtN(disc),
+        solution: [
+          { explanation: 'D = b² − 4ac 공식 적용', expression: `D = ${b}² − 4·${a}·${c} = ${b * b} − ${4 * a * c} = ${disc}` },
+        ],
+      };
+    } else if (d === 2) {
+      // 근의 종류 판별 (서로 다른 두 실근 / 중근 / 실근 없음)
+      const type = rng.int(0, 2);
+      let disc: number, bCoef: number, cCoef: number;
+      if (type === 0) { bCoef = rng.int(1, 5) * 2; cCoef = bCoef * bCoef / 4 - rng.int(1, 4); disc = bCoef * bCoef - 4 * cCoef; }
+      else if (type === 1) { bCoef = rng.int(2, 8); cCoef = bCoef * bCoef / 4; disc = 0; }
+      else { bCoef = rng.int(1, 4); cCoef = bCoef * bCoef / 4 + rng.int(1, 5); disc = bCoef * bCoef - 4 * cCoef; }
+      const bStr = bCoef > 0 ? ` + ${bCoef}x` : ` − ${Math.abs(bCoef)}x`;
+      const cStr = cCoef > 0 ? ` + ${cCoef}` : ` − ${Math.abs(cCoef)}`;
+      const kind = disc > 0 ? '서로 다른 두 실근' : disc === 0 ? '중근(실근 1개)' : '실근 없음';
+      return {
+        display: `x²${bStr}${cStr} = 0의 근의 종류 = %%BLANK%%`,
+        answer: kind,
+        solution: [
+          { explanation: 'D = b² − 4ac', expression: `D = ${bCoef}² − 4·${cCoef} = ${disc}` },
+          { explanation: disc > 0 ? 'D > 0' : disc === 0 ? 'D = 0' : 'D < 0', expression: kind },
+        ],
+      };
+    } else {
+      // 이차방정식의 실수 근 구하기 (정수 근 보장)
+      const r1 = nonZeroInt(rng, -6, 6), r2 = nonZeroInt(rng, -6, 6);
+      const a = rng.int(1, 3);
+      const bCoef = -(r1 + r2) * a, cCoef = r1 * r2 * a;
+      const aStr = a === 1 ? '' : `${a}`;
+      const bStr = bCoef > 0 ? ` + ${bCoef}x` : bCoef < 0 ? ` − ${Math.abs(bCoef)}x` : '';
+      const cStr = cCoef > 0 ? ` + ${cCoef}` : cCoef < 0 ? ` − ${Math.abs(cCoef)}` : '';
+      return {
+        display: `${aStr}x²${bStr}${cStr} = 0,&nbsp; x = %%BLANK%%`,
+        answer: r1 === r2 ? fmtN(r1) : `${fmtN(r1)}, ${fmtN(r2)}`,
+        solution: [
+          { explanation: '인수분해', expression: `(x ${r1 < 0 ? '− ' + Math.abs(r1) : '+ ' + r1})(x ${r2 < 0 ? '− ' + Math.abs(r2) : '+ ' + r2}) = 0` },
+          { explanation: '영인수 법칙', expression: `x = ${fmtN(r1)} 또는 x = ${fmtN(r2)}` },
+        ],
+      };
+    }
+  },
+
+  'H1-04': (rng) => {
+    // 이차함수 꼭짓점형: y = a(x−p)² + q ↔ 표준형
+    const type = rng.int(0, 1);
+    const a = nonZeroInt(rng, -3, 3) === 0 ? 1 : nonZeroInt(rng, -3, 3);
+    const p = nonZeroInt(rng, -5, 5);
+    const q = nonZeroInt(rng, -9, 9);
+    if (type === 0) {
+      // 꼭짓점형 → 표준형 전개
+      const A = a, B = -2 * a * p, C = a * p * p + q;
+      const bStr = B > 0 ? ` + ${B}x` : ` − ${Math.abs(B)}x`;
+      const cStr = C > 0 ? ` + ${C}` : C < 0 ? ` − ${Math.abs(C)}` : '';
+      const aStr = a === 1 ? '' : a === -1 ? '−' : `${a}`;
+      const pSign = p > 0 ? ` − ${p}` : ` + ${Math.abs(p)}`;
+      const qSign = q > 0 ? ` + ${q}` : ` − ${Math.abs(q)}`;
+      return {
+        display: `y = ${aStr}(x${pSign})²${qSign}을 전개하면 y = %%BLANK%%`,
+        answer: `${A}x²${bStr}${cStr}`,
+        solution: [
+          { explanation: '(x−p)² 전개', expression: `(x${pSign})² = x² ${signStr(-2 * p)}x + ${p * p}` },
+          { explanation: 'a 분배 후 q 합산', expression: `y = ${A}x²${bStr}${cStr}` },
+        ],
+      };
+    } else {
+      // 꼭짓점 좌표 읽기
+      const aStr = a === 1 ? '' : a === -1 ? '−' : `${a}`;
+      const pSign = p > 0 ? ` − ${p}` : ` + ${Math.abs(p)}`;
+      const qSign = q > 0 ? ` + ${q}` : ` − ${Math.abs(q)}`;
+      return {
+        display: `y = ${aStr}(x${pSign})²${qSign}의 꼭짓점 좌표 = %%BLANK%%`,
+        answer: `(${fmtN(p)}, ${fmtN(q)})`,
+      };
+    }
+  },
+
+  'H1-05': (rng) => {
+    // 삼각함수 특수각: sin, cos, tan at 0°, 30°, 45°, 60°, 90°, 120°, 135°, 150°, 180°
+    const angles = [0, 30, 45, 60, 90, 120, 135, 150, 180];
+    const funcs = ['sin', 'cos', 'tan'] as const;
+    const angle = angles[rng.int(0, angles.length - 1)];
+    const func = funcs[rng.int(0, 2)];
+
+    const rad = (angle * Math.PI) / 180;
+    const sinVal: Record<number, string> = {
+      0: '0', 30: fracHTMLRaw(1, 2), 45: K('\\dfrac{\\sqrt{2}}{2}'), 60: K('\\dfrac{\\sqrt{3}}{2}'),
+      90: '1', 120: K('\\dfrac{\\sqrt{3}}{2}'), 135: K('\\dfrac{\\sqrt{2}}{2}'), 150: fracHTMLRaw(1, 2), 180: '0',
+    };
+    const cosVal: Record<number, string> = {
+      0: '1', 30: K('\\dfrac{\\sqrt{3}}{2}'), 45: K('\\dfrac{\\sqrt{2}}{2}'), 60: fracHTMLRaw(1, 2),
+      90: '0', 120: `-${fracHTMLRaw(1, 2)}`, 135: `-${K('\\dfrac{\\sqrt{2}}{2}')}`, 150: `-${K('\\dfrac{\\sqrt{3}}{2}')}`, 180: '−1',
+    };
+    const tanVal: Record<number, string> = {
+      0: '0', 30: K('\\dfrac{\\sqrt{3}}{3}'), 45: '1', 60: K('\\sqrt{3}'),
+      90: '정의 불가', 120: `-${K('\\sqrt{3}')}`, 135: '−1', 150: `-${K('\\dfrac{\\sqrt{3}}{3}')}`, 180: '0',
+    };
+
+    if (func === 'tan' && angle === 90) {
+      return { display: `tan 90° = %%BLANK%%`, answer: '정의 불가' };
+    }
+    const answer = func === 'sin' ? sinVal[angle] : func === 'cos' ? cosVal[angle] : tanVal[angle];
+    return { display: `${func} ${angle}° = %%BLANK%%`, answer };
+
+    // suppress unused warning
+    void rad;
+  },
+
+  'H1-06': (rng, opts) => {
+    // 등차수열 일반항: aₙ = a₁ + (n−1)d
+    const d_opt = opts?.difficulty ?? 2;
+    const a1 = nonZeroInt(rng, -10, 10);
+    const d = nonZeroInt(rng, -5, 5);
+    if (d_opt === 1) {
+      // 일반항 구하기
+      const n = rng.int(5, 20);
+      const an = a1 + (n - 1) * d;
+      return {
+        display: `첫째항 ${fmtN(a1)}, 공차 ${fmtN(d)}인 등차수열의 제${n}항 = %%BLANK%%`,
+        answer: fmtN(an),
+        solution: [
+          { explanation: 'aₙ = a₁ + (n−1)d', expression: `a${n} = ${fmtN(a1)} + (${n}−1)×${fmtN(d)} = ${fmtN(an)}` },
+        ],
+      };
+    } else if (d_opt === 2) {
+      // 공차 구하기
+      const n = rng.int(5, 15);
+      const an = a1 + (n - 1) * d;
+      return {
+        display: `등차수열에서 a₁ = ${fmtN(a1)}, a${n} = ${fmtN(an)}일 때 공차 = %%BLANK%%`,
+        answer: fmtN(d),
+        solution: [
+          { explanation: 'd = (aₙ − a₁) / (n−1)', expression: `d = (${fmtN(an)} − ${fmtN(a1)}) / ${n - 1} = ${fmtN(d)}` },
+        ],
+      };
+    } else {
+      // n번째 항 = k가 되는 n 구하기
+      const n = rng.int(5, 20);
+      const an = a1 + (n - 1) * d;
+      return {
+        display: `첫째항 ${fmtN(a1)}, 공차 ${fmtN(d)}인 등차수열에서 ${fmtN(an)}은 제몇항? n = %%BLANK%%`,
+        answer: fmtN(n),
+        solution: [
+          { explanation: 'aₙ = a₁ + (n−1)d에서 n 역산', expression: `n = (${fmtN(an)} − ${fmtN(a1)}) / ${fmtN(d)} + 1 = ${n}` },
+        ],
+      };
+    }
+  },
+
+  'H1-07': (rng, opts) => {
+    // 등비수열 일반항: aₙ = a₁ × r^(n−1)
+    const d = opts?.difficulty ?? 2;
+    const a1 = nonZeroInt(rng, -4, 4) === 0 ? 1 : nonZeroInt(rng, -4, 4);
+    const r = [2, 3, -2, -3][rng.int(0, 3)];
+    if (d === 1) {
+      const n = rng.int(2, 6);
+      const an = a1 * Math.pow(r, n - 1);
+      return {
+        display: `첫째항 ${fmtN(a1)}, 공비 ${fmtN(r)}인 등비수열의 제${n}항 = %%BLANK%%`,
+        answer: fmtN(an),
+        solution: [
+          { explanation: 'aₙ = a₁ × r^(n−1)', expression: `a${n} = ${fmtN(a1)} × ${fmtN(r)}^${n - 1} = ${fmtN(an)}` },
+        ],
+      };
+    } else if (d === 2) {
+      // 공비 구하기
+      const n = rng.int(3, 5);
+      const an = a1 * Math.pow(r, n - 1);
+      return {
+        display: `등비수열에서 a₁ = ${fmtN(a1)}, a${n} = ${fmtN(an)}일 때 공비 = %%BLANK%%`,
+        answer: fmtN(r),
+      };
+    } else {
+      // 등비중항 구하기: b² = ac
+      const b = nonZeroInt(rng, -5, 5) * (rng.int(0, 1) ? 1 : 2);
+      const a = b * r, c = b / r;
+      if (!Number.isInteger(c)) {
+        const b2 = rng.int(1, 5) * Math.abs(r);
+        return {
+          display: `등비수열 a, ${fmtN(b2)}, c에서 a × c = %%BLANK%%`,
+          answer: fmtN(b2 * b2),
+        };
+      }
+      return {
+        display: `등비수열 ${fmtN(a)}, ${fmtN(b)}, ${fmtN(c)}에서 등비중항 = %%BLANK%%`,
+        answer: fmtN(b),
+      };
+    }
+  },
+
+  'H1-08': (rng, opts) => {
+    // 지수법칙 (실수 지수 포함) 및 지수방정식
+    const d = opts?.difficulty ?? 2;
+    if (d === 1) {
+      // a^m × a^n = a^(m+n)
+      const base = rng.int(2, 5);
+      const m = rng.int(1, 4), n = rng.int(1, 4);
+      return {
+        display: `${K(`${base}^{${m}} \\times ${base}^{${n}}`)} = %%BLANK%%`,
+        answer: K(`${base}^{${m + n}}`),
+      };
+    } else if (d === 2) {
+      // 지수방정식: a^x = b → x = log_a(b) (정수 해 보장)
+      const base = [2, 3, 5][rng.int(0, 2)];
+      const x = rng.int(1, 5);
+      const val = Math.pow(base, x);
+      return {
+        display: `${base}<sup>x</sup> = ${val},&nbsp; x = %%BLANK%%`,
+        answer: String(x),
+        solution: [
+          { explanation: `${base}^x = ${base}^${x}이므로`, expression: `x = ${x}` },
+        ],
+      };
+    } else {
+      // (a^m)^n, a^m / a^n 혼합
+      const base = rng.int(2, 4);
+      const type = rng.int(0, 1);
+      if (type === 0) {
+        const m = rng.int(1, 4), n = rng.int(2, 4);
+        return {
+          display: `${K(`(${base}^{${m}})^{${n}}`)} = %%BLANK%%`,
+          answer: K(`${base}^{${m * n}}`),
+        };
+      } else {
+        const m = rng.int(3, 7), n = rng.int(1, m - 1);
+        return {
+          display: `${K(`${base}^{${m}} \\div ${base}^{${n}}`)} = %%BLANK%%`,
+          answer: K(`${base}^{${m - n}}`),
+        };
+      }
+    }
+  },
+
+  'H1-09': (rng, opts) => {
+    // 로그 기초: 정의, 성질 (log_a(MN) = log_a(M) + log_a(N) 등)
+    const d = opts?.difficulty ?? 2;
+    if (d === 1) {
+      // log_a(b) = x 정의 이해: a^x = b → x = ?
+      const base = [2, 3, 5, 10][rng.int(0, 3)];
+      const exp = rng.int(1, 4);
+      const val = Math.pow(base, exp);
+      const baseStr = base === 10 ? 'log' : `log<sub>${base}</sub>`;
+      return {
+        display: `${baseStr} ${val} = %%BLANK%%`,
+        answer: String(exp),
+        solution: [
+          { explanation: `log_${base}(${val}) = x → ${base}^x = ${val} = ${base}^${exp}`, expression: `x = ${exp}` },
+        ],
+      };
+    } else if (d === 2) {
+      // 로그의 성질: log(MN) = log M + log N 또는 log(M/N)
+      const base = [2, 3, 10][rng.int(0, 2)];
+      const m = rng.int(1, 4), n = rng.int(1, 4);
+      const type = rng.int(0, 1);
+      const bStr = base === 10 ? 'log' : `log<sub>${base}</sub>`;
+      if (type === 0) {
+        return {
+          display: `${bStr} ${Math.pow(base, m)} + ${bStr} ${Math.pow(base, n)} = %%BLANK%%`,
+          answer: String(m + n),
+          solution: [
+            { explanation: 'log M + log N = log(MN)', expression: `= ${bStr} ${Math.pow(base, m + n)} = ${m + n}` },
+          ],
+        };
+      } else {
+        const big = Math.max(m, n), small = Math.min(m, n);
+        return {
+          display: `${bStr} ${Math.pow(base, big)} − ${bStr} ${Math.pow(base, small)} = %%BLANK%%`,
+          answer: String(big - small),
+          solution: [
+            { explanation: 'log M − log N = log(M/N)', expression: `= ${bStr} ${Math.pow(base, big - small)} = ${big - small}` },
+          ],
+        };
+      }
+    } else {
+      // log(a^k) = k·log(a)
+      const base = [2, 3][rng.int(0, 1)];
+      const k = rng.int(2, 5);
+      const val = Math.pow(base, k);
+      const bStr = base === 10 ? 'log' : `log<sub>${base}</sub>`;
+      return {
+        display: `${bStr} ${val} = %%BLANK%%`,
+        answer: String(k),
+        solution: [
+          { explanation: `log_${base}(${base}^${k}) = k·log_${base}(${base}) = k`, expression: `= ${k}` },
+        ],
+      };
+    }
+  },
+
+  'H1-10': (rng, opts) => {
+    // 수열의 합 Σ: Σk = n(n+1)/2, Σk² = n(n+1)(2n+1)/6, Σk³ = [n(n+1)/2]²
+    const d = opts?.difficulty ?? 2;
+    const n = rng.int(4, 10);
+    if (d === 1) {
+      // Σ_{k=1}^{n} k = n(n+1)/2
+      const result = n * (n + 1) / 2;
+      return {
+        display: `${K(`\\sum_{k=1}^{${n}} k`)} = %%BLANK%%`,
+        answer: String(result),
+        solution: [
+          { explanation: '∑k = n(n+1)/2 공식', expression: `= ${n}×${n + 1}/2 = ${result}` },
+        ],
+      };
+    } else if (d === 2) {
+      // Σ_{k=1}^{n} k² = n(n+1)(2n+1)/6
+      const result = n * (n + 1) * (2 * n + 1) / 6;
+      return {
+        display: `${K(`\\sum_{k=1}^{${n}} k^2`)} = %%BLANK%%`,
+        answer: String(result),
+        solution: [
+          { explanation: '∑k² = n(n+1)(2n+1)/6 공식', expression: `= ${n}×${n + 1}×${2 * n + 1}/6 = ${result}` },
+        ],
+      };
+    } else {
+      // Σ_{k=1}^{n} (ak + b)
+      const a = rng.int(1, 4), b = rng.int(1, 5);
+      const result = a * n * (n + 1) / 2 + b * n;
+      return {
+        display: `${K(`\\sum_{k=1}^{${n}} (${a}k + ${b})`)} = %%BLANK%%`,
+        answer: String(result),
+        solution: [
+          { explanation: `${a}·∑k + ${b}·n`, expression: `= ${a}·${n * (n + 1) / 2} + ${b}·${n} = ${result}` },
+        ],
+      };
+    }
+  },
+
 };
 
 // ==================== GENERATE SHEET ====================

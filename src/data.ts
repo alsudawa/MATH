@@ -131,11 +131,26 @@ export const GRADE_DATA: GradeGroup[] = [
       { id: '09', name: '완전제곱식 변형', perPage: 8 },
     ],
   },
+  {
+    code: 'H1', label: '고1', fullLabel: '고등학교 1학년', color: '#4A148C',
+    chapters: [
+      { id: '01', name: '다항식의 연산 (나머지 정리)', perPage: 8 },
+      { id: '02', name: '고급 인수분해 (합·차의 세제곱)', perPage: 8 },
+      { id: '03', name: '이차방정식 (판별식·근의 종류)', perPage: 8 },
+      { id: '04', name: '이차함수 꼭짓점형 변환', perPage: 8 },
+      { id: '05', name: '삼각함수 특수각 (sin·cos·tan)', perPage: 12 },
+      { id: '06', name: '등차수열 일반항', perPage: 10 },
+      { id: '07', name: '등비수열 일반항', perPage: 10 },
+      { id: '08', name: '지수법칙 (실수 지수·지수방정식)', perPage: 10 },
+      { id: '09', name: '로그 기초 (정의·성질)', perPage: 10 },
+      { id: '10', name: '수열의 합 (∑ 공식)', perPage: 8 },
+    ],
+  },
 ];
 
 // ==================== WID ====================
 
-const WID_REGEX = /^([EM][1-3])-(\d{2})-([0-9A-Z]{5})$/;
+const WID_REGEX = /^([EMH][1-3])-(\d{2})-([0-9A-Z]{5})$/;
 
 export function parseWid(wid: string): ParsedWid | null {
   const m = WID_REGEX.exec(wid.toUpperCase());
