@@ -8,6 +8,7 @@ import ChapterSelector from './components/ChapterSelector';
 import PreviewSection from './components/PreviewSection';
 import PrintArea from './components/PrintArea';
 import AnswersPage from './components/AnswersPage';
+import PracticeMode from './components/PracticeMode';
 
 export interface Sheet {
   wid: string;
@@ -24,6 +25,8 @@ export default function App() {
   const [currentSheet, setCurrentSheet] = useState(0);
   const [showAnswers, setShowAnswers] = useState(false);
   const [answersMode, setAnswersMode] = useState(false);
+  const [timerDuration, setTimerDuration] = useState(0);
+  const [practiceMode, setPracticeMode] = useState(false);
 
   const grade = GRADE_DATA.find(g => g.code === gradeCode) ?? GRADE_DATA[0];
   const chapter = grade.chapters[chapIdx] ?? grade.chapters[0];
@@ -42,6 +45,7 @@ export default function App() {
     setSheets(newSheets);
     setCurrentSheet(0);
     setShowAnswers(false);
+    setPracticeMode(false);
     history.replaceState(null, '', buildURL(newSheets[0].wid, count));
     if (scroll) {
       setTimeout(() => {
@@ -170,22 +174,42 @@ export default function App() {
               <StepLabel num={4} text="몇 장 출력할까요?" color={grade.color} />
               <SheetCountControl count={sheetCount} onChange={handleChangeCount} color={grade.color} />
             </section>
+
+            <section className="flex flex-col gap-5">
+              <StepLabel num={5} text="시간 제한을 설정하세요" color={grade.color} />
+              <TimerSelector duration={timerDuration} onChange={setTimerDuration} color={grade.color} />
+            </section>
           </div>
 
           {/* 오른쪽: 프리뷰 (wide 화면에서 sticky) */}
           {sheets.length > 0 && (
             <div id="preview-section" className="lg:sticky lg:top-4">
-              <PreviewSection
-                sheets={sheets}
-                currentSheet={currentSheet}
-                onNavigate={setCurrentSheet}
-                showAnswers={showAnswers}
-                onToggleAnswers={() => setShowAnswers(v => !v)}
-                grade={grade}
-                chapter={chapter}
-                cols={cols}
-                sheetCount={sheetCount}
-              />
+              {practiceMode ? (
+                <PracticeMode
+                  sheet={sheets[currentSheet]}
+                  grade={grade}
+                  chapter={chapter}
+                  timerDuration={timerDuration}
+                  onClose={() => setPracticeMode(false)}
+                  onNewProblems={() => {
+                    setPracticeMode(false);
+                    generate(gradeCode, chapIdx, sheetCount, { difficulty });
+                  }}
+                />
+              ) : (
+                <PreviewSection
+                  sheets={sheets}
+                  currentSheet={currentSheet}
+                  onNavigate={setCurrentSheet}
+                  showAnswers={showAnswers}
+                  onToggleAnswers={() => setShowAnswers(v => !v)}
+                  grade={grade}
+                  chapter={chapter}
+                  cols={cols}
+                  sheetCount={sheetCount}
+                  onStartPractice={() => setPracticeMode(true)}
+                />
+              )}
             </div>
           )}
         </div>
@@ -241,6 +265,33 @@ function DifficultySelector({ difficulty, onChange, color }: { difficulty: 1 | 2
           }
         >
           {labels[d]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const TIMER_OPTIONS: { label: string; value: number }[] = [
+  { label: '없음', value: 0 },
+  { label: '1분', value: 60 },
+  { label: '3분', value: 180 },
+  { label: '5분', value: 300 },
+];
+
+function TimerSelector({ duration, onChange, color }: { duration: number; onChange: (d: number) => void; color: string }) {
+  return (
+    <div className="flex gap-2">
+      {TIMER_OPTIONS.map(opt => (
+        <button
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          className="px-4 py-2 rounded-xl font-bold text-sm border-2 transition-all"
+          style={duration === opt.value
+            ? { background: color, borderColor: color, color: '#fff' }
+            : { background: '#fff', borderColor: '#e2e8f0', color: '#475569' }
+          }
+        >
+          {opt.label}
         </button>
       ))}
     </div>

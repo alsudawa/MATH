@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Sheet } from '../App';
 import { GradeGroup, Chapter, buildAnswerURL } from '../data';
 import { renderDisplay, renderWithAnswer } from '../utils';
@@ -15,15 +15,24 @@ interface Props {
   chapter: Chapter;
   cols: number;
   sheetCount: number;
+  onStartPractice: () => void;
 }
 
 export default function PreviewSection({
   sheets, currentSheet, onNavigate,
   showAnswers, onToggleAnswers,
-  grade, chapter, cols, sheetCount,
+  grade, chapter, cols, sheetCount, onStartPractice,
 }: Props) {
   const qrRef = useRef<HTMLDivElement>(null);
+  const [copied, setCopied] = useState(false);
   const sheet = sheets[currentSheet];
+
+  const handleCopyUrl = () => {
+    navigator.clipboard.writeText(location.href).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
 
   useEffect(() => {
     if (!qrRef.current) return;
@@ -67,12 +76,25 @@ export default function PreviewSection({
         <div className="flex-1" />
 
         {/* 액션 */}
-        <div className="flex gap-2 flex-shrink-0">
+        <div className="flex gap-2 flex-shrink-0 flex-wrap">
+          <button
+            onClick={handleCopyUrl}
+            className="px-3 py-1.5 rounded-lg border-2 border-slate-200 bg-white text-slate-600 font-bold text-sm hover:border-slate-300 transition-all"
+          >
+            {copied ? '✓ 복사됨' : '🔗 URL 복사'}
+          </button>
           <button
             onClick={onToggleAnswers}
             className="px-3 py-1.5 rounded-lg border-2 border-slate-200 bg-white text-slate-600 font-bold text-sm hover:border-slate-300 transition-all"
           >
             {showAnswers ? '정답 숨기기' : '정답 보기'}
+          </button>
+          <button
+            onClick={onStartPractice}
+            className="px-3 py-1.5 rounded-lg border-2 font-bold text-sm transition-all hover:opacity-90"
+            style={{ borderColor: grade.color, color: grade.color, background: '#fff' }}
+          >
+            ✏️ 연습 시작
           </button>
           <button
             onClick={() => window.print()}
